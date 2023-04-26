@@ -1,0 +1,249 @@
+*** Settings ***
+Suite Setup       init    sa
+Suite Teardown    Close All Browsers
+Test Setup
+Test Teardown
+Resource          ../Interface/Usermagement.txt
+Resource          ../Interface/login.txt
+Resource          ../Action/common.txt
+Resource          ../Action/common.txt
+Resource          ../Action/usermanagement_action.txt
+Library           ExtendedSelenium2Library
+Library           String
+Resource          ../Interface/common_interface.txt
+Library           DatabaseLibrary
+Resource          ../Interface/workingshift.txt
+Resource          ../Action/working_shift.txt
+Resource          ../Interface/workingshift.txt
+Library           Collections
+Resource          ../Action/AddEvent.txt
+Library           BuiltIn
+Resource          ../Action/oddcompiler_action.txt
+Library           ExcelLibrary
+Resource          ../Action/working_shift.txt
+
+*** Test Cases ***
+Verify Fitler Area
+    Comment    Event Upload File
+    Comment    Navigate To Menu    Odds Compiler
+    go to    https://owp.nexdev.net/V1/OddsCompiler
+    #by default match status for today, tomorrow is In-play, Live
+    Verify Default Date    #Today
+    Verify List of Match Status For Today and Future    @{listofmatchstatus}
+    Select Tomorrow
+    Verify List of Match Status For Today and Future    @{listofmatchstatus}
+    #When selected yesterday,match status must be All items are selected(Select All)
+    Select Yesterday
+    Verify List of Match Status For Yesterday    @{listofmatchstatus}
+    Select All Match Status
+    Select Multiple Match Status    Live    In-play    Cancel    Completed    Postponed    Suspended
+
+Verify Event Info After Uploaded Event
+    # Upload Events
+    Upload Event For Yesterday
+    #Check Event Info after uploaded events in Odd Compiler page
+    Comment    Navigate To Menu    Odds Compiler
+    go to    https://owp.nexdev.net/V1/OddsCompiler
+    Select Yesterday
+    ${file_path}    Set Variable    F:/Working/Automation/Internal/MT_OWP/Assignment.xlsx
+    ${doc_id}    Set Variable    mt1
+    Open Excel Document    ${file_path}    ${doc_id}
+    ${date}    Read Excel Cell    1    2
+    ${sheet1}    Get Sheet    Sheet0
+    ${dong}    Evaluate    0
+    : FOR    ${row_no}    IN    @{sheet1.values}
+    \    ${row_status}    Run Keyword And Return Status    log    ${row_no}
+    \    ${dong}    Evaluate    ${dong} + 1
+    ${max_row}    Evaluate    ${dong} + 1
+    : FOR    ${row}    IN RANGE    3    ${max_row}
+    \    ${matchstatus}    ${time}    ${provider}    ${otherprovider}    ${home}    ${away}
+    \    ...    ${league}    ${mb_hdp}    ${spread_hdp}    ${spread_ou}    ${rmark}
+    \    ...    ${wb}    ${round}    ${w1}    ${w2}    ${w3}
+    \    ...    ${w4}    Get Value From Event Upload_New    ${row}
+    \    Search League To View Odd Compiler    ${league}    ${matchstatus}
+    \    Verify Event Info    ${matchstatus}    ${time}    ${provider}    ${otherprovider}    ${home}
+    \    ...    ${away}    ${league}    ${mb_hdp}    ${spread_hdp}    ${spread_ou}
+    \    ...    ${rmark}    ${wb}    ${round}    ${w1}    ${w2}
+    \    ...    ${w3}    ${w4}
+    Close All Excel Documents
+
+Verify Input Full Set Of Odds_Positive
+    Comment    Navigate To Menu    Odds Compiler
+    go to    https://owp.nexdev.net/V1/OddsCompiler
+    Select Yesterday
+    ${file_path}    Set Variable    F:/Working/Automation/Internal/MT_OWP/Assignment.xlsx
+    ${doc_id}    Set Variable    mt1
+    Open Excel Document    ${file_path}    ${doc_id}
+    ${date}    Read Excel Cell    1    2
+    ${sheet1}    Get Sheet    Sheet0
+    ${dong}    Evaluate    0
+    : FOR    ${row_no}    IN    @{sheet1.values}
+    \    ${row_status}    Run Keyword And Return Status    log    ${row_no}
+    \    ${dong}    Evaluate    ${dong} + 1
+    ${max_row}    Evaluate    ${dong} + 1
+    : FOR    ${row}    IN RANGE    3    ${max_row}
+    \    ${matchstatus}    ${time}    ${provider}    ${otherprovider}    ${home}    ${away}
+    \    ...    ${league}    ${mb_hdp}    ${spread_hdp}    ${spread_ou}    ${rmark}
+    \    ...    ${wb}    ${round}    ${w1}    ${w2}    ${w3}
+    \    ...    ${w4}    Get Value From Event Upload_New    ${row}
+    \    Search League To View Odd Compiler    ${league}    ${matchstatus}
+    \    Comment    ${position}    Find Employee In Table    ${nickname}
+    \    Verify Event Info    ${matchstatus}    ${time}    ${provider}    ${otherprovider}    ${home}
+    \    ...    ${away}    ${league}    ${mb_hdp}    ${spread_hdp}    ${spread_ou}
+    \    ...    ${rmark}    ${wb}    ${round}    ${w1}    ${w2}
+    \    ...    ${w3}    ${w4}
+    \    Input Market And Odd    Market Testing    Away    1    1    1
+    \    ...    1    1    1    1    1
+    \    ...    1
+    : FOR    ${row}    IN RANGE    3    ${max_row}
+    \    ${matchstatus}    ${time}    ${provider}    ${otherprovider}    ${home}    ${away}
+    \    ...    ${league}    ${mb_hdp}    ${spread_hdp}    ${spread_ou}    ${rmark}
+    \    ...    ${wb}    ${round}    ${w1}    ${w2}    ${w3}
+    \    ...    ${w4}    Get Value From Event Upload_New    ${row}
+    \    Search League To View Odd Compiler    ${league}    ${matchstatus}
+    \    Comment    ${position}    Find Employee In Table    ${nickname}
+    \    Verify Event Info    ${matchstatus}    ${time}    ${provider}    ${otherprovider}    ${home}
+    \    ...    ${away}    ${league}    ${mb_hdp}    ${spread_hdp}    ${spread_ou}
+    \    ...    ${rmark}    ${wb}    ${round}    ${w1}    ${w2}
+    \    ...    ${w3}    ${w4}
+    \    Verify Market And Positive Odds    Market Testing    Away    1    1    1
+    \    ...    1    1    1    1    1
+    \    ...    1
+    Close All Excel Documents
+
+Verify Clear Odds
+    Comment    Navigate To Menu    Odds Compiler
+    go to    https://owp.nexdev.net/V1/OddsCompiler
+    Select Yesterday
+    ${file_path}    Set Variable    F:/Working/Automation/Internal/MT_OWP/Assignment.xlsx
+    ${doc_id}    Set Variable    mt1
+    Open Excel Document    ${file_path}    ${doc_id}
+    ${date}    Read Excel Cell    1    2
+    ${sheet1}    Get Sheet    Sheet0
+    ${dong}    Evaluate    0
+    : FOR    ${row_no}    IN    @{sheet1.values}
+    \    ${row_status}    Run Keyword And Return Status    log    ${row_no}
+    \    ${dong}    Evaluate    ${dong} + 1
+    ${max_row}    Evaluate    ${dong} + 1
+    : FOR    ${row}    IN RANGE    3    ${max_row}
+    \    ${matchstatus}    ${time}    ${provider}    ${otherprovider}    ${home}    ${away}
+    \    ...    ${league}    ${mb_hdp}    ${spread_hdp}    ${spread_ou}    ${rmark}
+    \    ...    ${wb}    ${round}    ${w1}    ${w2}    ${w3}
+    \    ...    ${w4}    Get Value From Event Upload_New    ${row}
+    \    Search League To View Odd Compiler    ${league}    ${matchstatus}
+    \    Verify Event Info    ${matchstatus}    ${time}    ${provider}    ${otherprovider}    ${home}
+    \    ...    ${away}    ${league}    ${mb_hdp}    ${spread_hdp}    ${spread_ou}
+    \    ...    ${rmark}    ${wb}    ${round}    ${w1}    ${w2}
+    \    ...    ${w3}    ${w4}
+    \    Clear Odd
+    : FOR    ${row}    IN RANGE    3    ${max_row}
+    \    ${matchstatus}    ${time}    ${provider}    ${otherprovider}    ${home}    ${away}
+    \    ...    ${league}    ${mb_hdp}    ${spread_hdp}    ${spread_ou}    ${rmark}
+    \    ...    ${wb}    ${round}    ${w1}    ${w2}    ${w3}
+    \    ...    ${w4}    Get Value From Event Upload_New    ${row}
+    \    Search League To View Odd Compiler    ${league}    ${matchstatus}
+    \    Verify Event Info    ${matchstatus}    ${time}    ${provider}    ${otherprovider}    ${home}
+    \    ...    ${away}    ${league}    ${mb_hdp}    ${spread_hdp}    ${spread_ou}
+    \    ...    ${rmark}    ${wb}    ${round}    ${w1}    ${w2}
+    \    ...    ${w3}    ${w4}
+    \    Verify Market And Positive Odds    ${EMPTY}    Home    ${EMPTY}    ${EMPTY}    ${EMPTY}
+    \    ...    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}
+    \    ...    ${EMPTY}
+    Close All Excel Documents
+
+Verify Input Not Full Set Of Odds
+    Comment    Navigate To Menu    Odds Compiler
+    go to    https://owp.nexdev.net/V1/OddsCompiler
+    Select Yesterday
+    ${file_path}    Set Variable    F:/Working/Automation/Internal/MT_OWP/Assignment.xlsx
+    ${doc_id}    Set Variable    mt1
+    Open Excel Document    ${file_path}    ${doc_id}
+    ${date}    Read Excel Cell    1    2
+    ${sheet1}    Get Sheet    Sheet0
+    ${dong}    Evaluate    0
+    : FOR    ${row_no}    IN    @{sheet1.values}
+    \    ${row_status}    Run Keyword And Return Status    log    ${row_no}
+    \    ${dong}    Evaluate    ${dong} + 1
+    ${max_row}    Evaluate    ${dong} + 1
+    : FOR    ${row}    IN RANGE    3    ${max_row}
+    \    ${matchstatus}    ${time}    ${provider}    ${otherprovider}    ${home}    ${away}
+    \    ...    ${league}    ${mb_hdp}    ${spread_hdp}    ${spread_ou}    ${rmark}
+    \    ...    ${wb}    ${round}    ${w1}    ${w2}    ${w3}
+    \    ...    ${w4}    Get Value From Event Upload_New    ${row}
+    \    Search League To View Odd Compiler    ${league}    ${matchstatus}
+    \    Comment    ${position}    Find Employee In Table    ${nickname}
+    \    Verify Event Info    ${matchstatus}    ${time}    ${provider}    ${otherprovider}    ${home}
+    \    ...    ${away}    ${league}    ${mb_hdp}    ${spread_hdp}    ${spread_ou}
+    \    ...    ${rmark}    ${wb}    ${round}    ${w1}    ${w2}
+    \    ...    ${w3}    ${w4}
+    \    Input Market And Odd    Market Testing    Away    ${EMPTY}    1    1
+    \    ...    ${EMPTY}    1    1    ${EMPTY}    1
+    \    ...    1
+    : FOR    ${row}    IN RANGE    3    ${max_row}
+    \    ${matchstatus}    ${time}    ${provider}    ${otherprovider}    ${home}    ${away}
+    \    ...    ${league}    ${mb_hdp}    ${spread_hdp}    ${spread_ou}    ${rmark}
+    \    ...    ${wb}    ${round}    ${w1}    ${w2}    ${w3}
+    \    ...    ${w4}    Get Value From Event Upload_New    ${row}
+    \    Search League To View Odd Compiler    ${league}    ${matchstatus}
+    \    Comment    ${position}    Find Employee In Table    ${nickname}
+    \    Verify Event Info    ${matchstatus}    ${time}    ${provider}    ${otherprovider}    ${home}
+    \    ...    ${away}    ${league}    ${mb_hdp}    ${spread_hdp}    ${spread_ou}
+    \    ...    ${rmark}    ${wb}    ${round}    ${w1}    ${w2}
+    \    ...    ${w3}    ${w4}
+    \    Verify Market And Positive Odds    Market Testing    Home    ${EMPTY}    ${EMPTY}    ${EMPTY}
+    \    ...    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}
+    \    ...    ${EMPTY}
+    Close All Excel Documents
+
+Verify Input Full Set Of Odds_Negative
+    Comment    Navigate To Menu    Odds Compiler
+    go to    https://owp.nexdev.net/V1/OddsCompiler
+    Select Yesterday
+    ${file_path}    Set Variable    F:/Working/Automation/Internal/MT_OWP/Assignment.xlsx
+    ${doc_id}    Set Variable    mt1
+    Open Excel Document    ${file_path}    ${doc_id}
+    ${date}    Read Excel Cell    1    2
+    ${sheet1}    Get Sheet    Sheet0
+    ${dong}    Evaluate    0
+    : FOR    ${row_no}    IN    @{sheet1.values}
+    \    ${row_status}    Run Keyword And Return Status    log    ${row_no}
+    \    ${dong}    Evaluate    ${dong} + 1
+    ${max_row}    Evaluate    ${dong} + 1
+    : FOR    ${row}    IN RANGE    3    ${max_row}
+    \    ${matchstatus}    ${time}    ${provider}    ${otherprovider}    ${home}    ${away}
+    \    ...    ${league}    ${mb_hdp}    ${spread_hdp}    ${spread_ou}    ${rmark}
+    \    ...    ${wb}    ${round}    ${w1}    ${w2}    ${w3}
+    \    ...    ${w4}    Get Value From Event Upload_New    ${row}
+    \    Search League To View Odd Compiler    ${league}    ${matchstatus}
+    \    Comment    ${position}    Find Employee In Table    ${nickname}
+    \    Verify Event Info    ${matchstatus}    ${time}    ${provider}    ${otherprovider}    ${home}
+    \    ...    ${away}    ${league}    ${mb_hdp}    ${spread_hdp}    ${spread_ou}
+    \    ...    ${rmark}    ${wb}    ${round}    ${w1}    ${w2}
+    \    ...    ${w3}    ${w4}
+    \    Input Market And Odd    Market Testing    Away    -1    -1    -1
+    \    ...    -1    -1    -1    -1    -1
+    \    ...    -1
+    : FOR    ${row}    IN RANGE    3    ${max_row}
+    \    ${matchstatus}    ${time}    ${provider}    ${otherprovider}    ${home}    ${away}
+    \    ...    ${league}    ${mb_hdp}    ${spread_hdp}    ${spread_ou}    ${rmark}
+    \    ...    ${wb}    ${round}    ${w1}    ${w2}    ${w3}
+    \    ...    ${w4}    Get Value From Event Upload_New    ${row}
+    \    Search League To View Odd Compiler    ${league}    ${matchstatus}
+    \    Comment    ${position}    Find Employee In Table    ${nickname}
+    \    Verify Event Info    ${matchstatus}    ${time}    ${provider}    ${otherprovider}    ${home}
+    \    ...    ${away}    ${league}    ${mb_hdp}    ${spread_hdp}    ${spread_ou}
+    \    ...    ${rmark}    ${wb}    ${round}    ${w1}    ${w2}
+    \    ...    ${w3}    ${w4}
+    \    Verify Market And Negative Odds    Market Testing    Away    -1    -1    -1
+    \    ...    -1    -1    -1    -1    -1
+    \    ...    -1
+    Close All Excel Documents
+
+tesst
+    Comment    html body.header-fixed.s.sidebar-fixed div#root div.app div.app-body main.main div.event-assignment div.table-block div.ReactTable.-striped.css-10o5k90.css-14e3y4j.rthfc-k5f49ez9 div.rt-table div.rt-tbody div.rt-tr-group div.rt-tr.-odd div.rt-td div.provider-cell p.wb
+    Comment    div.rt-tr-group:nth-child(1) > div:nth-child(1) > div:nth-child(5) > div:nth-child(1) > p:nth-child(3)
+    Navigate To Menu    Odds Compiler
+    Select Yesterday
+    Search League To View Odd Compiler    LMT1
+    Wait Until Element Is Visible    css=div.rt-tr-group:nth-child(1) > div:nth-child(1) > div:nth-child(5) > div:nth-child(1) > p:nth-child(3)
+    ${css}    Get CSS Property Value    css=div.rt-tr-group:nth-child(1) > div:nth-child(1) > div:nth-child(5) > div:nth-child(1) > p:nth-child(3)    color

@@ -1,0 +1,4 @@
+*** Variables ***
+@{expected_headerlist}    Bet Type    Goal    Home    Away    Draw    Action
+${add_btn}        xpath=//*[@id="root"]//button/Span[contains(text(),'Add')]
+@{bettype_list}    Handicap    Over/Under    FT.1X2    1H Handicap    1H Over/Under    1H 1X2

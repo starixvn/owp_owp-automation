@@ -1,0 +1,43 @@
+*** Settings ***
+Suite Setup       init    sa
+Suite Teardown    Close All Browsers
+Test Setup
+Test Teardown
+Resource          ../Interface/Usermagement.txt
+Resource          ../Interface/login.txt
+Resource          ../Action/common.txt
+Resource          ../Action/usermanagement_action.txt
+Library           ExtendedSelenium2Library
+Library           String
+Resource          ../Interface/common_interface.txt
+Library           DatabaseLibrary
+Library           ExcelLibrary
+Library           Collections
+Resource          ../Interface/os_livegameassignment.txt
+Library           BuiltIn
+Resource          ../Action/os_livegameassignment.txt
+Resource          ../Interface/os_livegameassignment.txt
+
+*** Test Cases ***
+Verify Filters
+    go to    https://owp.nexdev.net/V1/OSLiveGameAssignment
+    Verify From TO Value
+    Comment    Verify Sport Filter    @{sportlist}
+    Comment    Verify Match Status Filter    @{matchstatuslist}
+    Comment    select sport    Badminton    Netball
+    Comment    verify selected sport    Badminton    Netball
+    Comment    Select Match Status    Live    Canceled
+    Comment    Verify Selected Match Status    Live    Canceled
+    ${a}    get text    ${lastupdate_txt}
+    #set variable
+    ${file_path}    Set Variable    F:/Working/Automation/Internal/MT_OWP/OS.xlsx
+    ${doc_id}    Set Variable    mt1
+    Click Element    ${assignmentupload_btn}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[2]/div
+    Choose File    xpath=//*[@id="myFile"]    ${file_path}
+    Click Element    ${next_btn}
+    Wait Until Element Contains    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[2]/div/div[1]    There is no failed record    30s
+    click element    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[2]//button[text()='Submit']
+    Wait Until Element Contains    xpath=//*[@id="swal2-content"]    Other sport assignment is successfully submitted!    30s
+    click element    xpath=/html/body/div[2]/div/div[3]/button[1]
+    sleep    10s

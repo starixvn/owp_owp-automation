@@ -1,0 +1,320 @@
+*** Settings ***
+Library           String
+Library           DatabaseLibrary
+Library           Selenium2Library
+Library           BuiltIn
+Library           Collections
+Library           ExcelLibrary
+Resource          ../Action/working_shift.txt
+Library           DateTime
+Resource          ../Action/oddcompiler_action.txt
+
+*** Test Cases ***
+test_1
+    [Setup]
+    Comment    ${a}    Set Variable    MA vs MB
+    Comment    ${b}    Fetch From Left    ${a}    ${SPACE}
+    Comment    Log    ${b}
+    Comment    ${c}    Get Length    afafafaaaaaaaaaaa
+    Comment    Log    ${c}
+    Comment    Connect To Database Using Custom Params    pymssql    database='bodb_OWP', user='accteam', password='@dragon#',host= '10.18.200.234'
+    Comment    ${record}    Query    exec OWP_UserListGet @RoleId=1,@SectionId=2
+    Comment    Log    ${record}
+    Comment    ${leng}    Get Length    ${record}
+    Comment    Log    ${leng}
+    Comment    Disconnect From Database
+    Comment    ${i}    Set Variable    0.00292310
+    Comment    ${i}    Evaluate    0.00292310
+    Comment    ${j}    Set Variable    0.00292328
+    Comment    ${j}    Evaluate    0.00292328
+    Comment    ${k}    Evaluate    (${j}-${i})*100000000
+    Comment    Log    ${k}
+    Comment    ${code_color_web}    Set Variable    '#5a2398
+    Comment    ${code_color_web}    Remove String    ${code_color_web}    '#
+    Comment    Log    ${code_color_web}
+    Comment    ${a}    Set Variable    False
+    Comment    ${b}    Set Variable If    '${a}'=='True'    ${code_color_web}
+    Comment    ${b}    Set Variable If    '${a}'!='True'    ${EMPTY}
+    Comment    ${datestring}    Set Variable    Jul 01, 2019 - Jul 07, 2019
+    Comment    ${fromdate}    Fetch From Left    ${datestring}    ${SPACE}-
+    Comment    Log    ${fromdate}
+    Comment    ${enddate}    Fetch From Right    ${datestring}    -${SPACE}
+    Comment    Log    ${enddate}
+    Comment    ${m}    Set Variable    Do you want to copy starix14_nickname \n's working shift from previous week?
+    Comment    log    ${m}
+    Comment    ${q}    Set Variable    Do you want to copy starix14_nickname \n's working shift from previous week?
+    Comment    log    ${q}
+    Comment    Should Be Equal As Strings    ${m}    ${q}
+    ${po}    Generate Random String    1    0123456789
+    Log    ${po}
+    ${a}    Get Current Date    result_format=%m/%d/%Y
+    Log    ${a}
+    ${b}    Get Current Date    result_format=%A
+    Log    ${b}
+    ${c1}    Get Current Date
+    ${c}    Subtract Time From Date    ${c1}    3 days
+    ${c2}    Convert Date    ${c}    result_format=%A
+    ${c3}    Convert Date    ${c}    result_format=%b %d, %Y
+    ${d}    Add Time To Date    ${c1}    2 days
+    ${d1}    Convert Date    ${d}    result_format=%b %d, %Y
+    Log    ${c3} is ${c2}
+    ${t}    Set Variable    MON NOV O4
+    ${f}    Fetch From Right    ${t}    ${SPACE}
+    Log    ${f}
+    ${d}    Get Current Date    result_format=datetime
+    Log    ${d.year}
+    Log    ${d.month}
+    Log    ${f}/${d.month}/${d.year}
+    Comment    :FOR    ${i}    IN RANGE    1    8
+    Comment    \    ${text}    ExtendedSelenium2Library.Get Text    xpath=//*[@id="sticky-filter"]/div/div[2]/div/div[2]/div[${i}]
+    Comment    \    ${day}
+    @{day}    Run keyword if    '${b}'=='Thursday'    Create List    1    2    3
+    Log    ${day}
+    #chunhat
+    ${currentdate}    Get Current Date
+    ${monday}    Subtract Time From Date    ${currentdate}    6 days
+    ${tuesday}    Subtract Time From Date    ${currentdate}    5 days
+    ${wed}    Subtract Time From Date    ${currentdate}    4 days
+    ${thurday}    Subtract Time From Date    ${currentdate}    3 days
+    ${friday}    Subtract Time From Date    ${currentdate}    2 days
+    ${surtuday}    Subtract Time From Date    ${currentdate}    1 days
+    ${sunday}    Get Current Date
+    ${monday}    Convert Date    ${monday}    result_format=%m/%d/%Y
+    ${tuesday}    Convert Date    ${tuesday}    result_format=%m/%d/%Y
+    ${wed}    Convert Date    ${wed}    result_format=%m/%d/%Y
+    ${thurday}    Convert Date    ${thurday}    result_format=%m/%d/%Y
+    ${friday}    Convert Date    ${friday}    result_format=%m/%d/%Y
+    ${surtuday}    Convert Date    ${surtuday}    result_format=%m/%d/%Y
+    ${sunday}    Convert Date    ${sunday}    result_format=%m/%d/%Y
+    Log    ${monday}
+    Log    ${tuesday}
+    Log    ${wed}
+    Log    ${thurday}
+    Log    ${friday}
+    Log    ${surtuday}
+    Log    ${sunday}
+    #thu7
+    ${currentdate}    Get Current Date
+    ${monday}    Subtract Time From Date    ${currentdate}    5 days
+    ${tuesday}    Subtract Time From Date    ${currentdate}    4 days
+    ${wed}    Subtract Time From Date    ${currentdate}    3 days
+    ${thurday}    Subtract Time From Date    ${currentdate}    2 days
+    ${friday}    Subtract Time From Date    ${currentdate}    1 days
+    ${surtuday}    Get Current Date
+    ${sunday}    Add Time To Date    ${currentdate}    1 days
+    ${monday}    Convert Date    ${monday}    result_format=%m/%d/%Y
+    ${tuesday}    Convert Date    ${tuesday}    result_format=%m/%d/%Y
+    ${wed}    Convert Date    ${wed}    result_format=%m/%d/%Y
+    ${thurday}    Convert Date    ${thurday}    result_format=%m/%d/%Y
+    ${friday}    Convert Date    ${friday}    result_format=%m/%d/%Y
+    ${surtuday}    Convert Date    ${surtuday}    result_format=%m/%d/%Y
+    ${sunday}    Convert Date    ${sunday}    result_format=%m/%d/%Y
+    Log    ${monday}
+    Log    ${tuesday}
+    Log    ${wed}
+    Log    ${thurday}
+    Log    ${friday}
+    Log    ${surtuday}
+    Log    ${sunday}
+    #thu6
+    ${currentdate}    Get Current Date
+    ${monday}    Subtract Time From Date    ${currentdate}    4 days
+    ${tuesday}    Subtract Time From Date    ${currentdate}    3 days
+    ${wed}    Subtract Time From Date    ${currentdate}    2 days
+    ${thurday}    Subtract Time From Date    ${currentdate}    1 days
+    ${friday}    Get Current Date
+    ${surtuday}    Add Time To Date    ${currentdate}    1 days
+    ${sunday}    Add Time To Date    ${currentdate}    2 days
+    ${monday}    Convert Date    ${monday}    result_format=%m/%d/%Y
+    ${tuesday}    Convert Date    ${tuesday}    result_format=%m/%d/%Y
+    ${wed}    Convert Date    ${wed}    result_format=%m/%d/%Y
+    ${thurday}    Convert Date    ${thurday}    result_format=%m/%d/%Y
+    ${friday}    Convert Date    ${friday}    result_format=%m/%d/%Y
+    ${surtuday}    Convert Date    ${surtuday}    result_format=%m/%d/%Y
+    ${sunday}    Convert Date    ${sunday}    result_format=%m/%d/%Y
+    Log    ${monday}
+    Log    ${tuesday}
+    Log    ${wed}
+    Log    ${thurday}
+    Log    ${friday}
+    Log    ${surtuday}
+    Log    ${sunday}
+    #thu5
+    ${currentdate}    Get Current Date
+    ${monday}    Subtract Time From Date    ${currentdate}    3 days
+    ${tuesday}    Subtract Time From Date    ${currentdate}    2 days
+    ${wed}    Subtract Time From Date    ${currentdate}    1 days
+    ${thurday}    Get Current Date
+    ${friday}    Add Time To Date    ${currentdate}    1 days
+    ${surtuday}    Add Time To Date    ${currentdate}    2 days
+    ${sunday}    Add Time To Date    ${currentdate}    3 days
+    ${monday}    Convert Date    ${monday}    result_format=%m/%d/%Y
+    ${tuesday}    Convert Date    ${tuesday}    result_format=%m/%d/%Y
+    ${wed}    Convert Date    ${wed}    result_format=%m/%d/%Y
+    ${thurday}    Convert Date    ${thurday}    result_format=%m/%d/%Y
+    ${friday}    Convert Date    ${friday}    result_format=%m/%d/%Y
+    ${surtuday}    Convert Date    ${surtuday}    result_format=%m/%d/%Y
+    ${sunday}    Convert Date    ${sunday}    result_format=%m/%d/%Y
+    Log    ${monday}
+    Log    ${tuesday}
+    Log    ${wed}
+    Log    ${thurday}
+    Log    ${friday}
+    Log    ${surtuday}
+    Log    ${sunday}
+    #thu4
+    ${currentdate}    Get Current Date
+    ${monday}    Subtract Time From Date    ${currentdate}    2 days
+    ${tuesday}    Subtract Time From Date    ${currentdate}    1 days
+    ${wed}    Get Current Date
+    ${thurday}    Add Time To Date    ${currentdate}    1 days
+    ${friday}    Add Time To Date    ${currentdate}    2 days
+    ${surtuday}    Add Time To Date    ${currentdate}    3 days
+    ${sunday}    Add Time To Date    ${currentdate}    4 days
+    ${monday}    Convert Date    ${monday}    result_format=%m/%d/%Y
+    ${tuesday}    Convert Date    ${tuesday}    result_format=%m/%d/%Y
+    ${wed}    Convert Date    ${wed}    result_format=%m/%d/%Y
+    ${thurday}    Convert Date    ${thurday}    result_format=%m/%d/%Y
+    ${friday}    Convert Date    ${friday}    result_format=%m/%d/%Y
+    ${surtuday}    Convert Date    ${surtuday}    result_format=%m/%d/%Y
+    ${sunday}    Convert Date    ${sunday}    result_format=%m/%d/%Y
+    Log    ${monday}
+    Log    ${tuesday}
+    Log    ${wed}
+    Log    ${thurday}
+    Log    ${friday}
+    Log    ${surtuday}
+    Log    ${sunday}
+    #thu3
+    ${currentdate}    Get Current Date
+    ${monday}    Subtract Time From Date    ${currentdate}    1 days
+    ${tuesday}    Get Current Date
+    ${wed}    Add Time To Date    ${currentdate}    1 days
+    ${thurday}    Add Time To Date    ${currentdate}    2 days
+    ${friday}    Add Time To Date    ${currentdate}    3 days
+    ${surtuday}    Add Time To Date    ${currentdate}    4 days
+    ${sunday}    Add Time To Date    ${currentdate}    5 days
+    ${monday}    Convert Date    ${monday}    result_format=%m/%d/%Y
+    ${tuesday}    Convert Date    ${tuesday}    result_format=%m/%d/%Y
+    ${wed}    Convert Date    ${wed}    result_format=%m/%d/%Y
+    ${thurday}    Convert Date    ${thurday}    result_format=%m/%d/%Y
+    ${friday}    Convert Date    ${friday}    result_format=%m/%d/%Y
+    ${surtuday}    Convert Date    ${surtuday}    result_format=%m/%d/%Y
+    ${sunday}    Convert Date    ${sunday}    result_format=%m/%d/%Y
+    Log    ${monday}
+    Log    ${tuesday}
+    Log    ${wed}
+    Log    ${thurday}
+    Log    ${friday}
+    Log    ${surtuday}
+    Log    ${sunday}
+    #thu2
+    ${currentdate}    Get Current Date
+    ${monday}    Get Current Date
+    ${tuesday}    Add Time To Date    ${currentdate}    1 days
+    ${wed}    Add Time To Date    ${currentdate}    2 days
+    ${thurday}    Add Time To Date    ${currentdate}    3 days
+    ${friday}    Add Time To Date    ${currentdate}    4 days
+    ${surtuday}    Add Time To Date    ${currentdate}    5 days
+    ${sunday}    Add Time To Date    ${currentdate}    6 days
+    ${monday}    Convert Date    ${monday}    result_format=%m/%d/%Y
+    ${tuesday}    Convert Date    ${tuesday}    result_format=%m/%d/%Y
+    ${wed}    Convert Date    ${wed}    result_format=%m/%d/%Y
+    ${thurday}    Convert Date    ${thurday}    result_format=%m/%d/%Y
+    ${friday}    Convert Date    ${friday}    result_format=%m/%d/%Y
+    ${surtuday}    Convert Date    ${surtuday}    result_format=%m/%d/%Y
+    ${sunday}    Convert Date    ${sunday}    result_format=%m/%d/%Y
+    Log    ${monday}
+    Log    ${tuesday}
+    Log    ${wed}
+    Log    ${thurday}
+    Log    ${friday}
+    Log    ${surtuday}
+    Log    ${sunday}
+
+tesst1
+    Comment    @{shiftlist}    Create List    1    2    3    4
+    ...    5    6
+    Comment    Remove Values From List    ${shiftlist}    ${shiftlist[1]}
+    Comment    Log    ${shiftlist}
+    Comment    ${file_path}    Set Variable    F:/Working/Automation/Internal/OWP/WS.xlsx
+    Comment    ${doc_id}    Set Variable    mt1
+    Comment    Open Excel Document    ${file_path}    ${doc_id}
+    Comment    : FOR    ${row}    IN RANGE    2    ${maxrow}
+    Comment    \    ${nickname}    @{shift}    Get Shift Of Staff In Upload File    ${row}
+    Comment    ${EMPTY}
+    Comment    ${EMPTY}
+    Comment    Close All Excel Documents
+    ${date}    Get Current Date    result_format=%m/%d/%Y %I:%M %p
+    Log    ${date}
+    ${d}    Get Current Date
+    Log    ${d}
+    ${date} =    Add Time To Date    ${d}    60 minutes
+    Log    ${date}
+    ${date}    Convert Date    ${date}    result_format=%m/%d/%Y %I:%M %p
+    ${date}    Set Variable    ${date} GMT+8
+    Log    ${date}
+    ${monday}    ${tuesday}    ${wednesday}    ${thurday}    ${friday}    ${saturday}    ${sunday}
+    ...    Return Days Of Week
+    @{shiftlist}    Create List    a    b    c
+    Log    ${shiftlist[1]}
+    ${rdodds}    Generate Random String    3    12346789
+    Log    ${rdodds}
+    @{shiftlist}    Create List    1    2    3    4    5
+    ...    6
+    Log    @{shiftlist}[5]
+    Comment    ${date}    Get Current Date    result_format=%b %d, %Y
+    ${date}    Get Current Date
+    ${date}    Subtract Time From Date    ${date}    1 days
+    ${date}    Convert Date    ${date}    result_format=%b %d, %Y
+    Log    ${date}
+    #set variable
+    ${file_path}    Set Variable    F:/Working/Automation/Internal/MT_OWP/Assignment.xlsx
+    ${doc_id}    Set Variable    mt1
+    Open Excel Document    ${file_path}    ${doc_id}
+    ${date}    Read Excel Cell    1    2
+    ${sheet1}    Get Sheet    Sheet0
+    ${dong}    Evaluate    0
+    : FOR    ${row_no}    IN    @{sheet1.values}
+    \    ${row_status}    Run Keyword And Return Status    log    ${row_no}
+    \    ${dong}    Evaluate    ${dong} + 1
+    Log    ${dong}
+    : FOR    ${row}    IN RANGE    3    4
+    \    ${matchstatus}    ${time}    ${provider}    ${otherprovider}    ${home}    ${away}
+    \    ...    ${league}    ${mb_hdp}    ${spread_hdp}    ${spread_ou}    ${rmark}
+    \    ...    ${wb}    ${round}    ${w1}    ${w2}    ${w3}
+    \    ...    ${w4}    ${mbcn88hdp}    ${spread88hdp}    ${mbcn88ou}    ${spread88ou}
+    \    ...    Get Value From Event Upload    ${row}
+    \    Comment    Run Keyword If    '${nickname}'=='None'    Exit For Loop
+    \    Comment    Search Employee    ${nickname}
+    \    Comment    ${position}    Find Employee In Table    ${nickname}
+    \    Comment    Verify Assigned Shift In Row_Without Background    ${position}    ${shift_excel}
+    ${date}    Yesterday
+    Write Excel Cell    1    2    ${date}
+    Save Excel Document    Assignment.xlsx
+    Close All Excel Documents
+    ${date}    Today
+
+Example
+    [Setup]    open browser    about:blank    chrome
+    Comment    ${test}=    execute javascript    function test() {return 1}; return test();
+    Comment    should be equal as strings    ${test}    1
+    Comment    ${sum}=    Execute Javascript    return 1 + 1;
+    Comment    Should Be Equal    ${sum}    ${2}
+    Comment    Comment    ${fisrt}    Execute Javascript    function getMondayOfCurrentWeek(d){ \ var day = d.getDay(); \ return new Date(d.getFullYear(), d.getMonth(), d.getDate() + (day == 0?-6:1)-day ); \ }
+    Comment    Comment    Log    ${fisrt}
+    Comment    ${fisrt}    Execute Javascript    function getMondayOfCurrentWeek(d){ \ var d = new Date(); \ var day = d.getDay(); \ return new Date(d.getFullYear(), d.getMonth(), d.getDate() + (day == 0?-6:1)-day );}; \ \ return getMondayOfCurrentWeek()
+    Comment    Log    ${fisrt}
+    #set variable
+    ${file_path}    Set Variable    F:/Working/Automation/Internal/MT_OWP/Assignment.xlsx
+    ${doc_id}    Set Variable    mt1
+    Open Excel Document    ${file_upload}    ${doc_id}
+    ${date}    Read Excel Cell    1    2
+    : FOR    ${row}    IN RANGE    3    9
+    \    Get Shift Of Staff In Upload File    ${row}
+    \    Comment    Run Keyword If    '${nickname}'=='None'    Exit For Loop
+    \    Comment    Search Employee    ${nickname}
+    \    Comment    ${position}    Find Employee In Table    ${nickname}
+    \    Comment    Verify Assigned Shift In Row_Without Background    ${position}    ${shift_excel}
+    Close All Excel Documents
+    [Teardown]    close all browsers

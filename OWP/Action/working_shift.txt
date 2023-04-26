@@ -1,0 +1,1491 @@
+*** Settings ***
+Library           ExtendedSelenium2Library
+Resource          ../Interface/workingshift.txt
+Library           String
+Library           Collections
+Library           ExcelLibrary
+Resource          ../Interface/common_interface.txt
+Library           DateTime
+
+*** Keywords ***
+Select Time Zone
+    [Arguments]    ${timezone}
+    Wait Until Page Contains Element    ${timezone_setting}    timeout=100s
+    Click Element    ${timezone_setting}
+    Wait Until Element Is Visible    xpath=//*[@id="dropdownTimezone"]/li/label    timeout=10s
+    Click Element    xpath=//*[@id="dropdownTimezone"]/li/label[contains(text(),'${timezone}')]
+
+Time Zone Should Be
+    [Arguments]    ${expected_timezone}
+    Wait Until Page Contains Element    xpath=//*[@id="sticky-filter"]/div/div[1]/div[1]/span[4]/span    timeout=30s
+    ${timez}    Get Text    xpath=//*[@id="sticky-filter"]/div/div[1]/div[1]/span[4]/span
+    Should Be Equal    ${timez}    ${expected_timezone}
+
+Select Week or Day
+    [Arguments]    ${week_day_txt}
+    Wait Until Element Is Visible    xpath=//*[@id="sticky-filter"]/form/div[1]/div[1]/a[contains(text(),'')]    timeout=10s
+    Click Element    xpath=//*[@id="sticky-filter"]/form/div[1]/div[1]/a[contains(text(),'${week_day_txt}')]
+
+Verify Label Of Week Filter
+    [Arguments]    ${date}    ${employee}    ${department}    ${section}    ${category}    ${location}
+    ...    ${search}    ${upload}    ${exportpickup}
+    @{expected_list}    Create List    ${date}    ${employee}    ${department}    ${section}    ${category}
+    ...    ${location}    ${search}    ${upload}    ${exportpickup}
+    @{web_list}    Create List
+    Wait Until Element Is Visible    xpath=//*[@id="sticky-filter"]/form/div[2]/div[2]/div    timeout=30s
+    ${text}    get text    xpath=//*[@id="sticky-filter"]/form/div[2]/div[2]/div
+    Append To List    ${web_list}    ${text}
+    ${text}    get text    xpath=//*[@id="sticky-filter"]/form/div[2]/div[3]/div
+    Append To List    ${web_list}    ${text}
+    ${text}    get text    xpath=//*[@id="sticky-filter"]/form/div[2]/div[4]/div[1]
+    Append To List    ${web_list}    ${text}
+    ${text}    get text    xpath=//*[@id="sticky-filter"]/form/div[2]/div[5]/div[1]
+    Append To List    ${web_list}    ${text}
+    Comment    ${text}    get text    xpath=//*[@id="sticky-filter"]/form/div[2]/div[6]/div[1]
+    Comment    Append To List    ${web_list}    ${text}
+    ${text}    get text    xpath=//*[@id="sticky-filter"]/form/div[2]/div[7]/div[1]
+    Append To List    ${web_list}    ${text}
+    ${text}    get text    xpath=//*[@id="sticky-filter"]/form/div[2]/div[8]/div[1]
+    Append To List    ${web_list}    ${text}
+    ${text}    get text    xpath=//*[@id="sticky-filter"]/form/div[2]/div[10]/a[1]
+    Append To List    ${web_list}    ${text}
+    ${text}    get text    xpath=//*[@id="btn-open-upload"]
+    Append To List    ${web_list}    ${text}
+    ${text}    get text    xpath=//*[@id="exportExcelDropdown"]
+    Append To List    ${web_list}    ${text}
+    Log    ${web_list}
+    Should Be Equal    ${expected_list}    ${web_list}
+
+Verify Label Of Day Filter
+    [Arguments]    ${date}    ${employee}    ${section}    ${shift}    ${location}    ${excludecloseacc}
+    ...    ${search}
+    @{expected_list}    Create List    ${date}    ${employee}    ${section}    ${shift}    ${location}
+    ...    ${excludecloseacc}    ${search}
+    @{web_list}    Create List
+    Wait Until Element Is Visible    xpath=//*[@id="sticky-filter"]/form/div[2]/div[2]/div    timeout=60s
+    : FOR    ${i}    IN RANGE    1    6
+    \    ${text}    get text    xpath=//*[@id="sticky-filter"]/form/div[2]/div[${i}]/div[1]
+    \    Append to list    ${web_list}    ${text}
+    ${text}    get text    xpath=//*[@id="sticky-filter"]/form/div[2]/div[6]/label
+    Append to list    ${web_list}    ${text}
+    ${text}    get text    xpath=//*[@id="sticky-filter"]/form/div[2]/div[7]/a
+    Append to list    ${web_list}    ${text}
+    Log    ${web_list}
+    Should Be Equal    ${expected_list}    ${web_list}
+
+Verify By Default Filter_Week
+    [Arguments]    ${department}    ${section_value}    ${category_value}    ${location_value}
+    @{defaultvalue}    Create List
+    @{filterlist}    Create List    ${department}    ${section_value}    ${category_value}    ${location_value}
+    ${text}    Get Value    xpath=//*[@id="department"]/input
+    Append To List    ${defaultvalue}    ${text}
+    ${text}    Get Value    xpath=//*[@id="section"]/input
+    Append To List    ${defaultvalue}    ${text}
+    ${text}    Get Value    xpath=//*[@id="userCategories"]/input
+    Append To List    ${defaultvalue}    ${text}
+    ${text}    Get Value    xpath=//*[@id="userLocations"]/input
+    Append To List    ${defaultvalue}    ${text}
+    Comment    Run keyword if    '${exclude}'=='1'    Checkbox Should Be Selected    xpath=//*[@id="excludeClosedAccount"]
+    Should Be Equal    ${defaultvalue}    ${filterlist}
+
+Verify Items of Section list_checked
+    [Arguments]    @{section_list}
+    @{section_list_web}    Create List
+    Click Element    xpath=//*[@id="section"]/input
+    Checkbox Should Be Selected    xpath=//*[@id="sectionHeaderCheckBox"]
+    ${checkall_txt}    Get Text    xpath=//*[@id="fanex-multiselect-options-section"]/div[3]/ul/li/label
+    Append To List    ${section_list_web}    ${checkall_txt}
+    : FOR    ${i}    IN RANGE    1    29
+    \    ${j}    Evaluate    ${i} - 1
+    \    Checkbox Should Be Selected    xpath=//*[@id="fanex-multiselect-section--option-0-${j}"]
+    \    ${text}    get text    xpath=//*[@id="fanex-multiselect-options-section"]/ul/li[${i}]/div/label
+    \    Append To List    ${section_list_web}    ${text}
+    Should Be Equal    ${section_list_web}    ${section_list}
+
+Verify Items of Category list_checked
+    [Arguments]    @{category_list}
+    @{category_list_web}    Create List
+    Click Element    xpath=//*[@id="userCategories"]/input
+    Checkbox Should Be Selected    xpath=//*[@id="userCategoriesHeaderCheckBox"]
+    ${checkall_txt}    Get Text    xpath=//*[@id="fanex-multiselect-options-userCategories"]/div[3]/ul/li/label
+    Append To List    ${category_list_web}    ${checkall_txt}
+    : FOR    ${i}    IN RANGE    1    4
+    \    ${j}    Evaluate    ${i} - 1
+    \    Checkbox Should Be Selected    xpath=//*[@id="fanex-multiselect-userCategories--option-0-${j}"]
+    \    ${text}    get text    xpath=//*[@id="fanex-multiselect-options-userCategories"]/ul/li[${i}]/div/label
+    \    Append To List    ${category_list_web}    ${text}
+    Should Be Equal    ${category_list_web}    ${category_list}
+
+Verify Items of Location list_checked
+    [Arguments]    @{location_list}
+    @{location_list_web}    Create List
+    Click Element    xpath=//*[@id="userLocations"]/input
+    Checkbox Should Be Selected    xpath=//*[@id="userLocationsHeaderCheckBox"]
+    ${checkall_txt}    Get Text    xpath=//*[@id="fanex-multiselect-options-userLocations"]/div[3]/ul/li/label
+    Append To List    ${location_list_web}    ${checkall_txt}
+    : FOR    ${i}    IN RANGE    1    7
+    \    ${j}    Evaluate    ${i} - 1
+    \    Checkbox Should Be Selected    xpath=//*[@id="fanex-multiselect-userLocations--option-0-${j}"]
+    \    ${text}    get text    xpath=//*[@id="fanex-multiselect-options-userLocations"]/ul/li[${i}]/div/label
+    \    Append To List    ${location_list_web}    ${text}
+    Should Be Equal    ${location_list_web}    ${location_list}
+
+Section Check/Uncheck All
+    Click Element    xpath=//*[@id="sectionHeaderCheckBox"]
+
+Category Check/Uncheck All
+    Click Element    xpath=//*[@id="userCategoriesHeaderCheckBox"]
+
+Location Check/Uncheck All
+    Click Element    xpath=//*[@id="userLocationsHeaderCheckBox"]
+
+Verify Items of Section list_unchecked
+    [Arguments]    @{section_list}
+    @{section_list_web}    Create List
+    Click Element    xpath=//*[@id="section"]/input
+    Section Check/Uncheck All
+    ${checkall_txt}    Get Text    xpath=//*[@id="fanex-multiselect-options-section"]/div[3]/ul/li/label
+    Append To List    ${section_list_web}    ${checkall_txt}
+    : FOR    ${i}    IN RANGE    1    20
+    \    ${j}    Evaluate    ${i} - 1
+    \    Checkbox Should Not Be Selected    xpath=//*[@id="fanex-multiselect-section--option-0-${j}"]
+    \    ${text}    get text    xpath=//*[@id="fanex-multiselect-options-section"]/ul/li[${i}]/div/label
+    \    Append To List    ${section_list_web}    ${text}
+    Should Be Equal    ${section_list_web}    ${section_list}
+
+Verify Items of Category list_unchecked
+    [Arguments]    @{category_list}
+    @{category_list_web}    Create List
+    Click Element    xpath=//*[@id="userCategories"]/input
+    Category Check/Uncheck All
+    ${checkall_txt}    Get Text    xpath=//*[@id="fanex-multiselect-options-userCategories"]/div[3]/ul/li/label
+    Append To List    ${category_list_web}    ${checkall_txt}
+    : FOR    ${i}    IN RANGE    1    4
+    \    ${j}    Evaluate    ${i} - 1
+    \    Checkbox Should Not Be Selected    xpath=//*[@id="fanex-multiselect-userCategories--option-0-${j}"]
+    \    ${text}    get text    xpath=//*[@id="fanex-multiselect-options-userCategories"]/ul/li[${i}]/div/label
+    \    Append To List    ${category_list_web}    ${text}
+    Should Be Equal    ${category_list_web}    ${category_list}
+
+Verify Items of Location list_unchecked
+    [Arguments]    @{location_list}
+    @{location_list_web}    Create List
+    Click Element    xpath=//*[@id="userLocations"]/input
+    Location Check/Uncheck All
+    ${checkall_txt}    Get Text    xpath=//*[@id="fanex-multiselect-options-userLocations"]/div[3]/ul/li/label
+    Append To List    ${location_list_web}    ${checkall_txt}
+    : FOR    ${i}    IN RANGE    1    4
+    \    ${j}    Evaluate    ${i} - 1
+    \    Checkbox Should Not Be Selected    xpath=//*[@id="fanex-multiselect-userLocations--option-0-${j}"]
+    \    ${text}    get text    xpath=//*[@id="fanex-multiselect-options-userLocations"]/ul/li[${i}]/div/label
+    \    Append To List    ${location_list_web}    ${text}
+    Should Be Equal    ${location_list_web}    ${location_list}
+
+Select Section
+    [Arguments]    ${section1}=${EMPTY}    ${section2}=${EMPTY}    ${section3}=${EMPTY}    ${section4}=${EMPTY}    ${section5}=${EMPTY}    ${section6}=${EMPTY}
+    ...    ${section7}=${EMPTY}    ${section8}=${EMPTY}    ${section9}=${EMPTY}    ${section10}=${EMPTY}    ${section11}=${EMPTY}    ${section12}=${EMPTY}
+    ...    ${section13}=${EMPTY}    ${section14}=${EMPTY}    ${section15}=${EMPTY}    ${section16}=${EMPTY}    ${section17}=${EMPTY}    ${section18}=${EMPTY}
+    ...    ${section19}=${EMPTY}
+    Wait Until Element Is Visible    xpath=//*[@id="section"]/input    timeout=20s
+    Click Element    xpath=//*[@id="section"]/input
+    Section Check/Uncheck All
+    : FOR    ${i}    IN RANGE    1    20
+    \    ${j}    Evaluate    ${i} - 1
+    \    ${text}    get text    xpath=//*[@id="fanex-multiselect-options-section"]/ul/li[${i}]/div/label
+    \    Run keyword if    '${text}'=='${section1}'    Click Element    xpath=//*[@id="fanex-multiselect-options-section"]/ul/li[${i}]/div/label
+    \    Run keyword if    '${text}'=='${section2}'    Click Element    xpath=//*[@id="fanex-multiselect-options-section"]/ul/li[${i}]/div/label
+    \    Run keyword if    '${text}'=='${section3}'    Click Element    xpath=//*[@id="fanex-multiselect-options-section"]/ul/li[${i}]/div/label
+    \    Run keyword if    '${text}'=='${section4}'    Click Element    xpath=//*[@id="fanex-multiselect-options-section"]/ul/li[${i}]/div/label
+    \    Run keyword if    '${text}'=='${section5}'    Click Element    xpath=//*[@id="fanex-multiselect-options-section"]/ul/li[${i}]/div/label
+    \    Run keyword if    '${text}'=='${section6}'    Click Element    xpath=//*[@id="fanex-multiselect-options-section"]/ul/li[${i}]/div/label
+    \    Run keyword if    '${text}'=='${section7}'    Click Element    xpath=//*[@id="fanex-multiselect-options-section"]/ul/li[${i}]/div/label
+    \    Run keyword if    '${text}'=='${section8}'    Click Element    xpath=//*[@id="fanex-multiselect-options-section"]/ul/li[${i}]/div/label
+    \    Run keyword if    '${text}'=='${section9}'    Click Element    xpath=//*[@id="fanex-multiselect-options-section"]/ul/li[${i}]/div/label
+    \    Run keyword if    '${text}'=='${section10}'    Click Element    xpath=//*[@id="fanex-multiselect-options-section"]/ul/li[${i}]/div/label
+    \    Run keyword if    '${text}'=='${section11}'    Click Element    xpath=//*[@id="fanex-multiselect-options-section"]/ul/li[${i}]/div/label
+    \    Run keyword if    '${text}'=='${section12}'    Click Element    xpath=//*[@id="fanex-multiselect-options-section"]/ul/li[${i}]/div/label
+    \    Run keyword if    '${text}'=='${section13}'    Click Element    xpath=//*[@id="fanex-multiselect-options-section"]/ul/li[${i}]/div/label
+    \    Run keyword if    '${text}'=='${section14}'    Click Element    xpath=//*[@id="fanex-multiselect-options-section"]/ul/li[${i}]/div/label
+    \    Run keyword if    '${text}'=='${section15}'    Click Element    xpath=//*[@id="fanex-multiselect-options-section"]/ul/li[${i}]/div/label
+    \    Run keyword if    '${text}'=='${section16}'    Click Element    xpath=//*[@id="fanex-multiselect-options-section"]/ul/li[${i}]/div/label
+    \    Run keyword if    '${text}'=='${section17}'    Click Element    xpath=//*[@id="fanex-multiselect-options-section"]/ul/li[${i}]/div/label
+    \    Run keyword if    '${text}'=='${section18}'    Click Element    xpath=//*[@id="fanex-multiselect-options-section"]/ul/li[${i}]/div/label
+    \    Run keyword if    '${text}'=='${section19}'    Click Element    xpath=//*[@id="fanex-multiselect-options-section"]/ul/li[${i}]/div/label
+
+Select Category
+    [Arguments]    ${category1}=${EMPTY}    ${category2}=${EMPTY}    ${category3}=${EMPTY}
+    Click Element    xpath=//*[@id="userCategories"]/input
+    Category Check/Uncheck All
+    : FOR    ${i}    IN RANGE    1    4
+    \    ${j}    Evaluate    ${i} - 1
+    \    ${text}    get text    xpath=//*[@id="fanex-multiselect-options-userCategories"]/ul/li[${i}]/div/label
+    \    Run keyword if    '${text}'=='${category1}'    Click Element    xpath=//*[@id="fanex-multiselect-options-userCategories"]/ul/li[${i}]/div/label
+    \    Run keyword if    '${text}'=='${category2}'    Click Element    xpath=//*[@id="fanex-multiselect-options-userCategories"]/ul/li[${i}]/div/label
+    \    Run keyword if    '${text}'=='${category3}'    Click Element    xpath=//*[@id="fanex-multiselect-options-userCategories"]/ul/li[${i}]/div/label
+
+Select Location
+    [Arguments]    ${location1}=${EMPTY}    ${location2}=${EMPTY}    ${location3}=${EMPTY}
+    Click Element    xpath=//*[@id="userLocations"]/input
+    Location Check/Uncheck All
+    : FOR    ${i}    IN RANGE    1    4
+    \    ${j}    Evaluate    ${i} - 1
+    \    ${text}    get text    xpath=//*[@id="fanex-multiselect-options-userLocations"]/ul/li[${i}]/div/label
+    \    Run keyword if    '${text}'=='${location1}'    Click Element    xpath=//*[@id="fanex-multiselect-options-userLocations"]/ul/li[${i}]/div/label
+    \    Run keyword if    '${text}'=='${location2}'    Click Element    xpath=//*[@id="fanex-multiselect-options-userLocations"]/ul/li[${i}]/div/label
+    \    Run keyword if    '${text}'=='${location3}'    Click Element    xpath=//*[@id="fanex-multiselect-options-userLocations"]/ul/li[${i}]/div/label
+
+Add New Shift
+    [Arguments]    ${shift}    ${action}
+    [Documentation]    Action = 1 is Adding Shift
+    ...    Action = 2 is Clear Shift text
+    Wait Until Element Is Visible    ${shift_txt}    timeout=10s
+    Input Text    ${shift_txt}    ${shift}
+    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="sticky-filter"]/div/div[1]/div[3]/div[1]/div[3]/a[${action}]
+    Run keyword if    '${status}'=='True'    Click Element    xpath=//*[@id="sticky-filter"]/div/div[1]/div[3]/div[1]/div[3]/a[${action}]
+
+Verify Add New Shift
+    [Arguments]    ${shift}
+    : FOR    ${i}    IN RANGE    1    20
+    \    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="sticky-filter"]/div/div[1]/div[3]/ul/li[${i}]/div/span[2]
+    \    ${bg_code1}=    Set Variable If    '${status}'!='True'    ${EMPTY}
+    \    ${bg_code2}=    Set Variable If    '${status}'!='True'    ${EMPTY}
+    \    Run Keyword If    '${status}'!='True'    Run keywords    Log    ${shift} has been deleted or not existing in system
+    \    ...    AND    Exit For Loop
+    \    ${bg_code1}    Run Keyword If    '${status}'=='True'    Get Element Attribute    xpath=//*[@id="sticky-filter"]/div/div[1]/div[3]/ul/li[${i}]/div/span[1]@style
+    \    ${bg_code2}    Run Keyword If    '${status}'=='True'    Get Background Color    ${i}
+    \    ${shift_text}    Run Keyword If    '${status}'=='True'    Get Text    xpath=//*[@id="sticky-filter"]/div/div[1]/div[3]/ul/li[${i}]/div/span[2]
+    \    Run Keyword If    '${shift_text}'=='${shift}'    Run keywords    Log    ${shift} is added or existing
+    \    ...    AND    Exit For Loop
+    [Return]    ${bg_code1}    ${bg_code2}
+
+Delete Shift_panel
+    [Arguments]    ${shift}    ${action}
+    [Documentation]    This keyword for deleting shift. User can delete shift which has not been assigned to staff, and cannot delete assigned shift
+    Clear Element Text    ${shift_txt}
+    Input text    ${shift_txt}    ${shift}
+    : FOR    ${i}    IN RANGE    1    20
+    \    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="sticky-filter"]/div/div[1]/div[3]/ul/li[${i}]/div/span[2]
+    \    Run Keyword If    '${status}'!='True'    Run keywords    Log    ${shift} has been deleted or not existing in system
+    \    ...    AND    Exit For Loop
+    \    ${shift_text}    Run Keyword If    '${status}'=='True'    Get Text    xpath=//*[@id="sticky-filter"]/div/div[1]/div[3]/ul/li[${i}]/div/span[2]
+    \    Run Keyword If    '${shift_text}'=='${shift}' and '${action}'=='Cancel'    Run keywords    Mouse Over    xpath=//*[@id="sticky-filter"]/div/div[1]/div[3]/ul/li[${i}]/div/span[2]
+    \    ...    AND    Click Element    xpath=//*[@id="sticky-filter"]/div/div[1]/div[3]/ul/li[${i}]/div/span[3]
+    \    ...    AND    Delete and confirm shift    Do you want to delete shift\n ${shift} ?    ${action}
+    \    ...    AND    Exit For Loop
+    \    Run Keyword If    '${shift_text}'=='${shift}' and '${action}'=='OK'    Run keywords    Mouse Over    xpath=//*[@id="sticky-filter"]/div/div[1]/div[3]/ul/li[${i}]/div/span[2]
+    \    ...    AND    Click Element    xpath=//*[@id="sticky-filter"]/div/div[1]/div[3]/ul/li[${i}]/div/span[3]
+    \    ...    AND    Delete and confirm shift    Do you want to delete shift\n ${shift} ?    ${action}
+    \    ...    AND    Exit For Loop
+    \    Run Keyword If    '${shift_text}'=='${shift}' and '${action}'=='Yes'    Run keywords    Mouse Over    xpath=//*[@id="sticky-filter"]/div/div[1]/div[3]/ul/li[${i}]/div/span[2]
+    \    ...    AND    Click Element    xpath=//*[@id="sticky-filter"]/div/div[1]/div[3]/ul/li[${i}]/div/span[3]
+    \    ...    AND    Validate Deleting Assigned Shift    You cannot delete the assigned shift\n ${shift}
+    \    ...    AND    Exit For Loop
+
+Validate Deleting Assigned Shift
+    [Arguments]    ${expected_alert}
+    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="swal2-content"]
+    Run keyword if    '${status}'=='True'    Alert    ${expected_alert}
+
+Delete and confirm shift
+    [Arguments]    ${expected_alert}    ${action}
+    Wait Until Element Is Visible    xpath=//*[@id="swal2-content"]    timeout=10s
+    ${content}    Get Text    xpath=//*[@id="swal2-content"]
+    Should Be Equal    ${expected_alert}    ${content}
+    Run Keyword If    '${action}'=='OK'    Click Element    xpath=//button[contains(text(),'OK')]
+    Run Keyword If    '${action}'=='Cancel'    Click Element    xpath=//button[contains(text(),'Cancel')]
+
+Go To Shifts Management
+    Wait Until Element Is Visible    ${shift_setting}
+    Click Element    ${shift_setting}
+
+Alert
+    [Arguments]    ${expected_alert}
+    ${content}    Get Text    xpath=//*[@id="swal2-content"]
+    Should Be Equal    ${expected_alert}    ${content}
+    Wait Until Element Is Visible    xpath=/html/body/div[14]/div/div[3]/button[1]
+    Click Element    xpath=/html/body/div[14]/div/div[3]/button[1]
+
+Find And Change BackGround Of Shift
+    [Arguments]    ${shift}    ${color_code}    ${action}
+    [Documentation]    This keyword for deleting shift. User can delete shift which has not been assigned to staff, and cannot delete assigned shift
+    Clear Element Text    ${shift_txt}
+    Input text    ${shift_txt}    ${shift}
+    : FOR    ${i}    IN RANGE    1    20
+    \    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="sticky-filter"]/div/div[1]/div[3]/ul/li[${i}]/div/span[2]
+    \    Run Keyword If    '${status}'!='True'    Run keywords    Log    ${shift} has been deleted or not existing in system
+    \    ...    AND    Exit For Loop
+    \    ${shift_text}    Run Keyword If    '${status}'=='True'    Get Text    xpath=//*[@id="sticky-filter"]/div/div[1]/div[3]/ul/li[${i}]/div/span[2]
+    \    ${bg_code}    Run Keyword If    '${status}'=='True'    Get Element Attribute    xpath=//*[@id="sticky-filter"]/div/div[1]/div[3]/ul/li[${i}]/div/span[1]@style
+    \    Run Keyword If    '${shift_text}'=='${shift}' and '${action}' == 'Cancel'    Run keywords    Click Element    xpath=//*[@id="sticky-filter"]/div/div[1]/div[3]/ul/li[${i}]/div/span[1]
+    \    ...    AND    Change Background Shift Color    ${shift}    ${color_code}    ${action}
+    \    ...    AND    Exit For Loop
+    \    Run Keyword If    '${shift_text}'=='${shift}' and '${action}' == 'Done'    Run keywords    Click Element    xpath=//*[@id="sticky-filter"]/div/div[1]/div[3]/ul/li[${i}]/div/span[1]
+    \    ...    AND    Change Background Shift Color    ${shift}    ${color_code}    ${action}
+    \    ...    AND    Exit For Loop
+    [Return]    ${bg_code}
+
+Change Background Shift Color
+    [Arguments]    ${shift}    ${colorcode}    ${action}
+    ${shift_txt}    Get Text    xpath=//*[@id="sticky-filter"]/div/div[1]/div[3]/div[2]/span
+    Should Be Equal    ${shift_txt}    ${shift}
+    Click Element    xpath=//*[@id="bg-color"]
+    Wait Until Element Is Visible    xpath=(//input[@type='text'])[10]    timeout=20s
+    Input Text    xpath=(//input[@type='text'])[10]    ${colorcode}
+    Click Element    xpath=//div[12]/div[contains(text(),'OK')]
+    Run keyword if    '${action}'=='Cancel'    Click Element    xpath=//*[@id="btn-cancel-color"]
+    Run keyword if    '${action}'=='Done'    Click Element    xpath=//a[@id='btn-update-color']
+
+Verify Background Shift Color
+    [Arguments]    ${shift}    ${colorcode}
+    ${shift_txt}    Get Text    xpath=//*[@id="sticky-filter"]/div/div[1]/div[3]/div[2]/span
+    Should Be Equal    ${shift_txt}    ${shift}
+    Click Element    xpath=//*[@id="bg-color"]
+    Wait Until Element Is Visible    xpath=(//input[@type='text'])[10]    timeout=20s
+    ${code}    Get Value    xpath=(//input[@type='text'])[10]
+    Should Be Equal    ${code}    ${colorcode}
+    Click Element    xpath=//a[@id='btn-update-color']
+
+Find And Verify BackGround Of Shift
+    [Arguments]    ${shift}    ${color_code}
+    [Documentation]    This keyword for deleting shift. User can delete shift which has not been assigned to staff, and cannot delete assigned shift
+    Clear Element Text    ${shift_txt}
+    Input text    ${shift_txt}    ${shift}
+    : FOR    ${i}    IN RANGE    1    20
+    \    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="sticky-filter"]/div/div[1]/div[3]/ul/li[${i}]/div/span[2]
+    \    Run Keyword If    '${status}'!='True'    Run keywords    Log    ${shift} has been deleted or not existing in system
+    \    ...    AND    Exit For Loop
+    \    ${shift_text}    Run Keyword If    '${status}'=='True'    Get Text    xpath=//*[@id="sticky-filter"]/div/div[1]/div[3]/ul/li[${i}]/div/span[2]
+    \    Run Keyword If    '${shift_text}'=='${shift}'    Run keywords    Click Element    xpath=//*[@id="sticky-filter"]/div/div[1]/div[3]/ul/li[${i}]/div/span[1]
+    \    ...    AND    Verify Background Shift Color    ${shift}    ${color_code}
+    \    ...    AND    Exit For Loop
+
+Change Shift Color
+    [Arguments]    ${shift}    ${colorcode}    ${action}
+    ${shift_txt}    Get Text    xpath=//*[@id="sticky-filter"]/div/div[1]/div[3]/div[2]/span
+    Should Be Equal    ${shift_txt}    ${shift}
+    Click Element    xpath=//*[@id="text-color"]
+    Wait Until Element Is Visible    xpath=(//input[@type='text'])[10]    timeout=20s
+    Input Text    xpath=(//input[@type='text'])[10]    ${colorcode}
+    Click Element    xpath=//div[12]/div[contains(text(),'OK')]
+    Run keyword if    '${action}'=='Cancel'    Click Element    xpath=//*[@id="btn-cancel-color"]
+    Run keyword if    '${action}'=='Done'    Click Element    xpath=//a[@id='btn-update-color']
+
+Verify Shift Background_In list
+    [Arguments]    ${shift}    ${code_color}
+    Clear Element Text    ${shift_txt}
+    Input text    ${shift_txt}    ${shift}
+    : FOR    ${i}    IN RANGE    1    20
+    \    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="sticky-filter"]/div/div[1]/div[3]/ul/li[${i}]/div/span[2]
+    \    Run Keyword If    '${status}'!='True'    Run keywords    Log    ${shift} has been deleted or not existing in system
+    \    ...    AND    Exit For Loop
+    \    ${shift_text}    Run Keyword If    '${status}'=='True'    Get Text    xpath=//*[@id="sticky-filter"]/div/div[1]/div[3]/ul/li[${i}]/div/span[2]
+    \    Run Keyword If    '${shift_text}'=='${shift}'    Run keywords    Compare Shift Background    ${i}    ${code_color}
+    \    ...    AND    Exit For Loop
+
+Compare Shift Background
+    [Arguments]    ${position}    ${code_color}
+    ${code_color_web}    Get Element Attribute    xpath=//*[@id="sticky-filter"]/div/div[1]/div[3]/ul/li[${position}]/div@data-background
+    ${code_color_web1}    Set Variable    '${code_color_web}
+    ${code_color_web1}    Remove String    ${code_color_web1}    '#
+    Log    ${code_color_web1}
+    Should Be Equal    ${code_color_web1}    ${code_color}
+
+Search Shift To Assign
+    [Arguments]    ${position}    ${shift}
+    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[2]/div[2]/div[${position}]/div/span    timeout=10s
+    Click Element    xpath=//*[@id="jssortable"]/div[2]/div[2]/div[${position}]/div/span
+    Wait Until Element Is Visible    ${shift_assign_txt}    timeout=10s
+    Input Text    ${shift_assign_txt}    ${shift}
+    : FOR    ${i}    IN RANGE    1    20
+    \    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[2]/div[2]/div//div[4]/ul/li[${i}]/span[2]
+    \    Run Keyword If    '${status}'!='True'    Run keywords    Log    ${shift} has been deleted or not existing in system
+    \    ...    AND    Exit For Loop
+    \    ${shift_text}    Run Keyword If    '${status}'=='True'    Get Text    xpath=//*[@id="jssortable"]/div[2]/div[2]/div//div[4]/ul/li[${i}]/span[2]
+    \    ${background_color}    Run Keyword If    '${shift_text}'=='${shift}'    Get Background Shift Color    ${i}
+    \    Run Keyword If    '${shift_text}'=='${shift}'    Run keywords    Click Element    xpath=//*[@id="jssortable"]/div[2]/div[2]/div//div[4]/ul/li[${i}]/span[2]
+    \    ...    AND    Exit For Loop
+    [Return]    ${background_color}
+
+Assign Shift Without Search
+    [Arguments]    ${shift}
+    : FOR    ${i}    IN RANGE    1    200
+    \    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[2]/div[2]/div[1]/div/div/div[4]/ul/li[${i}]/span[2]
+    \    Run Keyword If    '${status}'!='True'    Run keywords    Log    ${shift} has been deleted or not existing in system
+    \    ...    AND    Exit For Loop
+    \    ${shift_text}    Run Keyword If    '${status}'=='True'    Get Text    xpath=//*[@id="jssortable"]/div[2]/div[2]/div[1]/div/div/div[4]/ul/li[${i}]/span[2]
+    \    Run Keyword If    '${shift_text}'=='${shift}'    Run keywords    Click Element    xpath=//*[@id="jssortable"]/div[2]/div[2]/div[1]/div/div/div[4]/ul/li[${i}]/span[2]
+    \    ...    AND    Exit For Loop
+
+Search Employee
+    [Arguments]    ${employee}
+    Wait Until Element Is Enabled    xpath=//*[@id="employee"]    timeout=30s
+    Click Element    xpath=//*[@id="employee"]
+    Input Text    xpath=//*[@id="employee"]    ${employee}
+    Press Key    xpath=//*[@id="employee"]    \\13
+    sleep    3s
+
+Search Employee And Assign Shift
+    [Arguments]    ${employee}    ${shift}
+    Search Employee    ${employee}
+    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[2]/div[1]/div[1]/div[1]
+    ${employee_name}    Run keyword if    '${status}'=='True'    Get text    xpath=//*[@id="jssortable"]/div[2]/div[1]/div[1]/div[2]/span[1]/a
+    ${get_passed}    Run Keyword And Return Status    Should Be Equal    ${employee_name}    ${employee}
+    : FOR    ${i}    IN RANGE    1    8
+    \    ${background_shift}    Run keyword if    '${get_passed}'=='True'    Search Shift To Assign    ${i}    ${shift}
+    \    log    ${background_shift}
+    [Return]    ${background_shift}
+
+Get Background Shift Color
+    [Arguments]    ${position}
+    Comment    ${code_color_web}    Get Element Attribute    xpath=//*[@id="jssortable"]/div[2]/div[2]//div[4]/ul/li[1]@data-bgcolor
+    ${code_color_web}    Get Element Attribute    xpath=//*[@id="jssortable"]//div[2]/div[2]//div[4]/ul/li[${position}]/span[1]@style
+    Comment    ${code_color_web1}    Set Variable    '${code_color_web}
+    Comment    ${code_color_background}    Remove String    ${code_color_web1}    '#
+    [Return]    ${code_color_web}
+
+Verify Assigned Shift
+    [Arguments]    ${position}    ${shift}    ${color_code}
+    ${shift_txt}    Get Text    xpath=//*[@id="jssortable"]/div[2]/div[2]/div[${position}]/div/span
+    Should Be Equal    ${shift_txt}    ${shift}
+    ${code_color_web}    Get Element Attribute    xpath=//*[@id="jssortable"]/div[2]/div[2]/div[${position}]/div/span@style
+    Should Be Equal    ${code_color_web}    ${color_code}
+    [Return]    ${shift_txt}
+
+Search Employee And Verify Assigned Shift
+    [Arguments]    ${employee}    ${shift}    ${color_code}
+    Search Employee    ${employee}
+    sleep    3s
+    ${status}    Run Keyword And Return Status    Wait Until Element Is Enabled    xpath=//*[@id="jssortable"]/div[2]/div[1]/div[1]/div[1]    timeout=60s
+    ${employee_name}    Run keyword if    '${status}'=='True'    Get text    xpath=//*[@id="jssortable"]/div[2]/div[1]/div[1]/div[2]/span[1]/a
+    ${get_passed}    Run Keyword And Return Status    Should Be Equal    ${employee_name}    ${employee}
+    : FOR    ${i}    IN RANGE    1    8
+    \    Run keyword if    '${get_passed}'=='True'    Verify Assigned Shift    ${i}    ${shift}    ${color_code}
+
+Remove Assigned Single Shift
+    [Arguments]    ${position}    ${shift}
+    ${shift_txt}    Get Text    xpath=//*[@id="jssortable"]/div[2]/div[2]/div[${position}]/div/span
+    ${status}    Run Keyword And Return Status    Should Be Equal    ${shift_txt}    ${shift}
+    Run Keyword If    '${status}'=='True'    Run Keywords    Mouse Over    xpath=//*[@id="jssortable"]/div[2]/div[2]/div[${position}]/div/span
+    ...    AND    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[2]/div[2]/div[${position}]/div/i[2]    timeout=10s
+    ...    AND    Click Element    xpath=//*[@id="jssortable"]/div[2]/div[2]/div[${position}]/div/i[2]
+
+Search Employee And Remove Assigned Single Shift
+    [Arguments]    ${employee}    ${shift}    ${action}
+    Search Employee    ${employee}
+    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[2]/div[1]/div[1]/div[1]
+    ${employee_name}    Run keyword if    '${status}'=='True'    Get text    xpath=//*[@id="jssortable"]/div[2]/div[1]/div[1]/div[2]/span[1]/a
+    ${get_passed}    Run Keyword And Return Status    Should Be Equal    ${employee_name}    ${employee}
+    : FOR    ${i}    IN RANGE    1    8
+    \    Run keyword if    '${get_passed}'=='True' and '${action}' =='Cancel'    Run keywords    Remove Assigned Single Shift    ${i}    ${shift}
+    \    ...    AND    Delete and confirm shift    Do you want to remove shift\n ${shift} ?    ${action}
+    \    Run keyword if    '${get_passed}'=='True' and '${action}' =='OK'    Run keywords    Remove Assigned Single Shift    ${i}    ${shift}
+    \    ...    AND    Delete and confirm shift    Do you want to remove shift\n ${shift} ?    ${action}
+
+Assign OT Shift
+    [Arguments]    ${position}    ${shift}
+    ${shift_txt}    Get Text    xpath=//*[@id="jssortable"]/div[2]/div[2]/div[${position}]/div/span
+    ${background_color}    Run Keyword If    '${shift_txt}' == 'OFF' or '${shift_txt}' == 'PH'    Search OT Shift To Assign    ${position}    ${shift}
+    [Return]    ${background_color}
+
+Search OT Shift To Assign
+    [Arguments]    ${position}    ${shift}
+    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[2]/div[2]/div[${position}]/div/span    timeout=10s
+    Click Element    xpath=//*[@id="jssortable"]/div[2]/div[2]/div[${position}]/div/span
+    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[2]/div[2]/div[${position}]/div/div/div[2]/label[contains(text(),'Overtime')]    timeout=10s
+    Click Element    xpath=//*[@id="jssortable"]/div[2]/div[2]/div[${position}]/div/div/div[2]/label[contains(text(),'Overtime')]
+    Input Text    ${shift_assign_txt}    ${shift}
+    : FOR    ${i}    IN RANGE    1    20
+    \    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[2]/div[2]/div//div[4]/ul/li[${i}]/span[2]
+    \    Run Keyword If    '${status}'!='True'    Run keywords    Log    ${shift} has been deleted or not existing in system
+    \    ...    AND    Exit For Loop
+    \    ${shift_text}    Run Keyword If    '${status}'=='True'    Get Text    xpath=//*[@id="jssortable"]/div[2]/div[2]/div//div[4]/ul/li[${i}]/span[2]
+    \    ${background_color}    Run Keyword If    '${shift_text}'=='${shift}'    Get Background Shift Color    ${i}
+    \    Run Keyword If    '${shift_text}'=='${shift}'    Run keywords    Click Element    xpath=//*[@id="jssortable"]/div[2]/div[2]/div//div[4]/ul/li[${i}]/span[2]
+    \    ...    AND    Exit For Loop
+    [Return]    ${background_color}
+
+Search Employee And Assign OT Shift
+    [Arguments]    ${employee}    ${shift_ot}    ${shift}
+    Search Employee    ${employee}
+    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[2]/div[1]/div[1]/div[1]
+    ${employee_name}    Run keyword if    '${status}'=='True'    Get text    xpath=//*[@id="jssortable"]/div[2]/div[1]/div[1]/div[2]/span[1]/a
+    ${get_passed}    Run Keyword And Return Status    Should Be Equal    ${employee_name}    ${employee}
+    : FOR    ${i}    IN RANGE    1    8
+    \    ${bg_off_ph}    Run keyword if    '${get_passed}'=='True'    Search Shift To Assign    ${i}    ${shift_ot}
+    \    ${bg_ot}    Run keyword if    '${get_passed}'=='True'    Assign OT Shift    ${i}    ${shift}
+    [Return]    ${bg_off_ph}    ${bg_ot}
+
+Verify Assigned OT Shift
+    [Arguments]    ${position}    ${shift}    ${color_code}    ${otshift}    ${otcolor_code}
+    ${shift_txt}    Get Text    xpath=//*[@id="jssortable"]/div[2]/div[2]/div[${position}]/div/span[1]
+    Should Be Equal    ${shift_txt}    ${shift}
+    ${code_color_web}    Get Element Attribute    xpath=//*[@id="jssortable"]/div[2]/div[2]/div[${position}]/div/span[1]@style
+    Should Be Equal    ${code_color_web}    ${color_code}
+    ${ot_text}    Get Text    xpath=//*[@id="jssortable"]/div[2]/div[2]/div[${position}]/div/span[2]
+    Should Be Equal    ${ot_text}    ${otshift}
+    ${code_otcolor_web}    Get Element Attribute    xpath=//*[@id="jssortable"]/div[2]/div[2]/div[${position}]/div/span[2]@style
+    Should Be Equal    ${code_otcolor_web}    ${otcolor_code}
+    [Return]    ${shift_txt}
+
+Search Employee And Verify Assigned OT Shift
+    [Arguments]    ${employee}    ${shift}    ${color_code}    ${otshift}    ${otcolor_code}
+    Search Employee    ${employee}
+    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[2]/div[1]/div[1]/div[1]
+    ${employee_name}    Run keyword if    '${status}'=='True'    Get text    xpath=//*[@id="jssortable"]/div[2]/div[1]/div[1]/div[2]/span[1]/a
+    ${get_passed}    Run Keyword And Return Status    Should Be Equal    ${employee_name}    ${employee}
+    : FOR    ${i}    IN RANGE    1    8
+    \    Run keyword if    '${get_passed}'=='True'    Verify Assigned OT Shift    ${i}    ${shift}    ${color_code}
+    \    ...    ${otshift}    ${otcolor_code}
+
+Remove Assigned OT Shift
+    [Arguments]    ${position}    ${shift}
+    ${shift_txt}    Get Text    xpath=//*[@id="jssortable"]/div[2]/div[2]/div[${position}]/div/span[2]
+    ${status}    Run Keyword And Return Status    Should Be Equal    ${shift_txt}    ${shift}
+    Run Keyword If    '${status}'=='True'    Run Keywords    Mouse Over    xpath=//*[@id="jssortable"]/div[2]/div[2]/div[${position}]/div/span
+    ...    AND    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[2]/div[2]/div[${position}]/div/i[2]    timeout=10s
+    ...    AND    Click Element    xpath=//*[@id="jssortable"]/div[2]/div[2]/div[${position}]/div/i[2]
+
+Search Employee And Remove Assigned OT Shift
+    [Arguments]    ${employee}    ${shift}    ${action}
+    Search Employee    ${employee}
+    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[2]/div[1]/div[1]/div[1]
+    ${employee_name}    Run keyword if    '${status}'=='True'    Get text    xpath=//*[@id="jssortable"]/div[2]/div[1]/div[1]/div[2]/span[1]/a
+    ${get_passed}    Run Keyword And Return Status    Should Be Equal    ${employee_name}    ${employee}
+    : FOR    ${i}    IN RANGE    1    8
+    \    Run keyword if    '${get_passed}'=='True' and '${action}' =='Cancel'    Run keywords    Remove Assigned OT Shift    ${i}    ${shift}
+    \    ...    AND    Delete and confirm shift    Do you want to remove shift\n ${shift} ?    ${action}
+    \    Run keyword if    '${get_passed}'=='True' and '${action}' =='OK'    Run keywords    Remove Assigned OT Shift    ${i}    ${shift}
+    \    ...    AND    Delete and confirm shift    Do you want to remove shift\n ${shift} ?    ${action}
+
+Find Employee In Section
+    [Arguments]    ${section}    ${employee}
+    [Documentation]    Purpose: Find staff in data grid and return staff position in table
+    Run Keyword If    '${section}'!='${EMPTY}'    Select Section    ${section}
+    Click Element    ${search}
+    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div
+    ${count}    Run keyword If    '${status}'=='True'    Get Matching Xpath Count    xpath=//*[@id="jssortable"]/div
+    : FOR    ${i}    IN RANGE    2    ${count} + 1
+    \    ${nickname}    Get Text    xpath=//*[@id="jssortable"]/div[${i}]/div[1]/div[1]/div[2]/span[1]/a
+    \    ${position}    Set Variable If    '${nickname}'=='${employee}'    ${i}
+    \    Run keyword if    '${nickname}'=='${employee}'    Exit For Loop
+    [Return]    ${position}
+
+Find Employee In Table
+    [Arguments]    ${employee}
+    sleep    10s
+    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div    timeout=100s
+    ${norow}    Run keyword If    '${status}'=='True'    Get Matching Xpath Count    xpath=//*[@id="jssortable"]/div
+    : FOR    ${i}    IN RANGE    1    ${norow} + 1
+    \    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[${i}]/div[1]/div[1]/div[2]/span[1]/a
+    \    Run keyword if    '${status}'!='True'    Continue For Loop
+    \    ${nickname}    Run keyword if    '${status}'=='True'    Get Text    xpath=//*[@id="jssortable"]/div[${i}]/div[1]/div[1]/div[2]/span[1]/a
+    \    Comment    ${nickname}    Get Text    xpath=//*[@id="jssortable"]/div[${i}]/div[1]/div[1]/div[2]/span[1]/a
+    \    ${position}    Set Variable If    '${nickname}'=='${employee}'    ${i}
+    \    Run keyword if    '${nickname}'=='${employee}'    Exit For Loop
+    [Return]    ${position}
+
+Assign Shift
+    [Arguments]    ${position}    ${shift}
+    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[${position}]/div[2]/div[1]/div/span    timeout=10s
+    Click Element    xpath=//*[@id="jssortable"]/div[${position}]/div[2]/div[1]/div/span
+    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[${position}]/div[2]//div[3]/input    timeout=10s
+    Input Text    xpath=//*[@id="jssortable"]/div[${position}]/div[2]//div[3]/input    ${shift}
+    : FOR    ${i}    IN RANGE    1    20
+    \    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[${position}]/div[2]/div//div[4]/ul/li[${i}]/span[2]
+    \    Run Keyword If    '${status}'!='True'    Run keywords    Log    ${shift} has been deleted or not existing in system
+    \    ...    AND    Exit For Loop
+    \    ${shift_text}    Run Keyword If    '${status}'=='True'    Get Text    xpath=//*[@id="jssortable"]//div[${position}]/div[2]/div//div[4]/ul/li[${i}]/span[2]
+    \    ${background_color}    Run Keyword If    '${shift_text}'=='${shift}'    Get Background Shift Color    ${i}
+    \    Run Keyword If    '${shift_text}'=='${shift}'    Run keywords    Click Element    xpath=//*[@id="jssortable"]//div[${position}]/div[2]/div//div[4]/ul/li[${i}]/span[2]
+    \    ...    AND    Exit For Loop
+    [Return]    ${background_color}
+
+Copy Assigned Single Shift
+    [Arguments]    ${position}    ${shift}
+    ${shift_txt}    Get Text    xpath=//*[@id="jssortable"]/div[${position}]/div[2]/div[1]/div/span
+    ${status}    Run Keyword And Return Status    Should Be Equal    ${shift_txt}    ${shift}
+    Run Keyword If    '${status}'=='True'    Run Keywords    Mouse Over    xpath=//*[@id="jssortable"]/div[${position}]/div[2]/div[1]/div/span
+    ...    AND    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[${position}]/div[2]/div[1]/div/i[1]    timeout=10s
+    ...    AND    Click Element    xpath=//*[@id="jssortable"]/div[${position}]/div[2]/div[1]/div/i[1]
+
+Paste Assigned Single Shift
+    [Arguments]    ${position}
+    : FOR    ${i}    IN RANGE    1    8
+    \    Click Element    //*[@id="jssortable"]/div[${position}]/div[2]/div[${i}]/div/span
+
+Verify Assigned Shift In Row
+    [Arguments]    ${location}    ${shift}    ${bg_code}
+    : FOR    ${i}    IN RANGE    1    8
+    \    ${shift_txt}    Get Text    xpath=//*[@id="jssortable"]/div[${location}]/div[2]/div[${i}]/div/span
+    \    Should Be Equal    ${shift_txt}    ${shift}
+    \    ${code_color_web}    Get Element Attribute    xpath=//*[@id="jssortable"]/div[${location}]/div[2]/div[${i}]/div/span@style
+    \    Should Be Equal    ${code_color_web}    ${bg_code}
+
+Assign OT Shift_Row
+    [Arguments]    ${location}    ${shift_ot}    ${shift}
+    Comment    Search Employee    ${employee}
+    Comment    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[2]/div[1]/div[1]/div[1]
+    Comment    ${employee_name}    Run keyword if    '${status}'=='True'    Get text    xpath=//*[@id="jssortable"]/div[2]/div[1]/div[1]/div[2]/span[1]/a
+    Comment    ${get_passed}    Run Keyword And Return Status    Should Be Equal    ${employee_name}    ${employee}
+    ${bg_off_ph}    Assign Shift In Row    ${location}    ${shift_ot}
+    ${bg_ot}    Assign OT Shift_Cells    ${location}    ${shift}
+    [Return]    ${bg_off_ph}    ${bg_ot}
+
+Assign OT Shift_Cells
+    [Arguments]    ${location}    ${shift}
+    ${shift_txt}    Get Text    xpath=//*[@id="jssortable"]/div[${location}]/div[2]/div[1]/div/span
+    ${background_color}    Run Keyword If    '${shift_txt}' == 'OFF' or '${shift_txt}' == 'PH'    Search OT Shift To Assign_Cells    ${location}    ${shift}
+    [Return]    ${background_color}
+
+Search OT Shift To Assign_Cells
+    [Arguments]    ${location}    ${shift}
+    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[${location}]/div[2]/div[1]/div/span    timeout=10s
+    Click Element    xpath=//*[@id="jssortable"]/div[${location}]/div[2]/div[1]/div/span
+    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[${location}]/div[2]/div[1]/div/div/div[2]/label[contains(text(),'Overtime')]    timeout=10s
+    Click Element    xpath=//*[@id="jssortable"]/div[${location}]/div[2]/div[1]/div/div/div[2]/label[contains(text(),'Overtime')]
+    Input Text    xpath=//*[@id="jssortable"]/div[${location}]//div[3]/input    ${shift}
+    : FOR    ${i}    IN RANGE    1    20
+    \    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[${location}]/div[2]/div//div[4]/ul/li[${i}]/span[2]
+    \    Run Keyword If    '${status}'!='True'    Run keywords    Log    ${shift} has been deleted or not existing in system
+    \    ...    AND    Exit For Loop
+    \    ${shift_text}    Run Keyword If    '${status}'=='True'    Get Text    xpath=//*[@id="jssortable"]/div[${location}]/div[2]/div//div[4]/ul/li[${i}]/span[2]
+    \    ${background_color}    Run Keyword If    '${shift_text}'=='${shift}'    Get Background Shift Color_Cells    ${location}    ${i}
+    \    Run Keyword If    '${shift_text}'=='${shift}'    Run keywords    Click Element    xpath=//*[@id="jssortable"]/div[${location}]/div[2]/div//div[4]/ul/li[${i}]/span[2]
+    \    ...    AND    Exit For Loop
+    [Return]    ${background_color}
+
+Get Background Shift Color_Cells
+    [Arguments]    ${location}    ${position}
+    Comment    ${code_color_web}    Get Element Attribute    xpath=//*[@id="jssortable"]/div[2]/div[2]//div[4]/ul/li[1]@data-bgcolor
+    ${code_color_web}    Get Element Attribute    xpath=//*[@id="jssortable"]/div[${location}]/div[2]//div[4]/ul/li[${position}]/span[1]@style
+    Comment    ${code_color_web1}    Set Variable    '${code_color_web}
+    Comment    ${code_color_background}    Remove String    ${code_color_web1}    '#
+    [Return]    ${code_color_web}
+
+Copy Assigned OT Shift
+    [Arguments]    ${position}    ${off_shift}    ${ot_shift}
+    ${offshift_txt}    Get Text    xpath=//*[@id="jssortable"]/div[${position}]/div[2]/div[1]/div/span[1]
+    ${otshift_txt}    Get Text    xpath=//*[@id="jssortable"]/div[${position}]/div[2]/div[1]/div/span[2]
+    ${status1}    Run Keyword And Return Status    Should Be Equal    ${offshift_txt}    ${off_shift}
+    ${status2}    Run Keyword And Return Status    Should Be Equal    ${otshift_txt}    ${ot_shift}
+    Run Keyword If    '${status1}'=='True' and '${status2}' == 'True'    Run Keywords    Mouse Over    xpath=//*[@id="jssortable"]/div[${position}]/div[2]/div[1]/div/span
+    ...    AND    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[${position}]/div[2]/div[1]/div/i[1]    timeout=10s
+    ...    AND    Click Element    xpath=//*[@id="jssortable"]/div[${position}]/div[2]/div[1]/div/i[1]
+
+Verify Assigned OT Shift In Row
+    [Arguments]    ${location}    ${shift}    ${color_code}    ${otshift}    ${otcolor_code}
+    : FOR    ${i}    IN RANGE    1    8
+    \    Verify Assigned OT Shift_Cells    ${location}    ${i}    ${shift}    ${color_code}    ${otshift}
+    \    ...    ${otcolor_code}
+
+Verify Assigned OT Shift_Cells
+    [Arguments]    ${location}    ${position}    ${shift}    ${color_code}    ${otshift}    ${otcolor_code}
+    ${shift_txt}    Get Text    xpath=//*[@id="jssortable"]/div[${location}]/div[2]/div[${position}]/div/span[1]
+    Should Be Equal    ${shift_txt}    ${shift}
+    ${code_color_web}    Get Element Attribute    xpath=//*[@id="jssortable"]/div[${location}]/div[2]/div[${position}]/div/span[1]@style
+    Should Be Equal    ${code_color_web}    ${color_code}
+    ${ot_text}    Get Text    xpath=//*[@id="jssortable"]/div[${location}]/div[2]/div[${position}]/div/span[2]
+    Should Be Equal    ${ot_text}    ${otshift}
+    ${code_otcolor_web}    Get Element Attribute    xpath=//*[@id="jssortable"]/div[${location}]/div[2]/div[${position}]/div/span[2]@style
+    Should Be Equal    ${code_otcolor_web}    ${otcolor_code}
+    [Return]    ${shift_txt}
+
+Action Option
+    [Arguments]    ${location}    ${action}    ${staff}
+    ${startdate}    ${enddate}    Get From Date To Date Of Current Range Date
+    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[${location}]/div[1]/div[2]/div[2]/i    timeout=10s
+    Run keyword if    '${status}'=='True'    Mouse Over    xpath=//*[@id="jssortable"]/div[${location}]/div[1]/div[2]/div[2]/i
+    : FOR    ${i}    IN RANGE    1    4
+    \    ${actionname}    Get Text    xpath=//*[@id="jssortable"]/div[${location}]/div[1]/div[2]/div[2]/div/span[${i}]
+    \    Run keyword if    '${actionname}'=='${action}' and '${action}'=='Copy from previous week'    Run keywords    Click Element    xpath=//*[@id="jssortable"]/div[${location}]/div[1]/div[2]/div[2]/div/span[${i}]
+    \    ...    AND    Confirmation    Do you want to copy ${staff}\n's working shift from previous week?    OK
+    \    ...    AND    Exit For Loop
+    \    Run keyword if    '${actionname}'=='${action}' and '${action}'=='Delete shift'    Run keywords    Click Element    xpath=//*[@id="jssortable"]/div[${location}]/div[1]/div[2]/div[2]/div/span[${i}]
+    \    ...    AND    Confirmation    Do you want to delete ${staff}\n's shifts\n from ${startdate} to ${enddate}?    OK
+    \    ...    AND    Exit For Loop
+    \    Run keyword if    '${actionname}'=='${action}' and '${action}'=='Copy shift'    Run keywords    Click Element    xpath=//*[@id="jssortable"]/div[${location}]/div[1]/div[2]/div[2]/div/span[${i}]
+    \    ...    AND    Exit For Loop
+
+Confirmation
+    [Arguments]    ${expected_alert}    ${action}
+    Wait Until Element Is Visible    xpath=//*[@id="swal2-content"]    timeout=60s
+    ${content}    Get Text    xpath=//*[@id="swal2-content"]
+    Log    ${content}
+    Should Be Equal As Strings    ${expected_alert}    ${content}
+    Run Keyword If    '${action}'=='OK'    Click Element    xpath=//button[contains(text(),'OK')]
+    Run Keyword If    '${action}'=='Cancel'    Click Element    xpath=//button[contains(text(),'Cancel')]
+
+Get From Date To Date Of Current Range Date
+    ${currentdate}    Get Current Range Date
+    ${startdate}    Fetch From Left    ${currentdate}    ${SPACE}-
+    ${enddate}    Fetch From Right    ${currentdate}    -${SPACE}
+    [Return]    ${startdate}    ${enddate}
+
+Get Current Range Date
+    ${current_date}    Get Text    xpath=//*[@id="sticky-filter"]/div/div[1]/div[1]/span[3]
+    [Return]    ${current_date}
+
+Paste Whole Shifts
+    [Arguments]    ${staff}
+    ${location}    Find Employee In Table    ${staff}
+    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[${location}]/div[1]/div[2]/a    timeout=10s
+    Run keyword if    '${status}'=='True'    Click Element    xpath=//*[@id="jssortable"]/div[${location}]/div[1]/div[2]/a
+
+Assign Shift_Cells
+    [Arguments]    ${location}    ${position}    ${shift}
+    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[${location}]/div[2]/div[${position}]/div/span    timeout=10s
+    Click Element    xpath=//*[@id="jssortable"]/div[${location}]/div[2]/div[${position}]/div/span
+    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[${location}]/div[2]//div[3]/input    timeout=10s
+    Input Text    xpath=//*[@id="jssortable"]/div[${location}]/div[2]//div[3]/input    ${shift}
+    : FOR    ${i}    IN RANGE    1    20
+    \    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[${location}]/div[2]/div//div[4]/ul/li[${i}]/span[2]
+    \    Run Keyword If    '${status}'!='True'    Run keywords    Log    ${shift} has been deleted or not existing in system
+    \    ...    AND    Exit For Loop
+    \    ${shift_text}    Run Keyword If    '${status}'=='True'    Get Text    xpath=//*[@id="jssortable"]/div[${location}]/div[2]/div//div[4]/ul/li[${i}]/span[2]
+    \    ${background_color}    Run Keyword If    '${shift_text}'=='${shift}'    Get Background Shift Color In Row    ${location}    ${i}
+    \    Run Keyword If    '${shift_text}'=='${shift}'    Run keywords    Click Element    xpath=//*[@id="jssortable"]/div[${location}]/div[2]/div//div[4]/ul/li[${i}]/span[2]
+    \    ...    AND    Exit For Loop
+    [Return]    ${background_color}
+
+Assign Shift In Row
+    [Arguments]    ${location}    ${shift}
+    : FOR    ${i}    IN RANGE    1    8
+    \    ${background_color}    Assign Shift_Cells    ${location}    ${i}    ${shift}
+    [Return]    ${background_color}
+
+Get Background Color
+    [Arguments]    ${position}
+    ${code_color_web}    Get Element Attribute    xpath=//*[@id="sticky-filter"]/div/div[1]/div[3]/ul/li[${position}]/div@data-background
+    ${code_color}    Set Variable    '${code_color_web}
+    ${code_color}    Remove String    ${code_color}    '#
+    [Return]    ${code_color}
+
+Move To Week
+    [Arguments]    ${pre_next}
+    Run Keyword If    '${pre_next}'=='Previous'    Click Element    xpath=//*[@id="sticky-filter"]/div/div[1]/div[1]/span[1]/i
+    Run Keyword If    '${pre_next}'=='Next'    Click Element    xpath=//*[@id="sticky-filter"]/div/div[1]/div[1]/span[2]/i
+
+Get Background Shift Color In Row
+    [Arguments]    ${location}    ${position}
+    Comment    ${code_color_web}    Get Element Attribute    xpath=//*[@id="jssortable"]/div[2]/div[2]//div[4]/ul/li[1]@data-bgcolor
+    ${code_color_web}    Get Element Attribute    xpath=//*[@id="jssortable"]/div[${location}]/div[2]//div[4]/ul/li[${position}]/span[1]@style
+    Comment    ${code_color_web1}    Set Variable    '${code_color_web}
+    Comment    ${code_color_background}    Remove String    ${code_color_web1}    '#
+    [Return]    ${code_color_web}
+
+Change Order Mode
+    Wait Until Element Is Visible    ${ordermode}    timeout=10s
+    Click Element    ${ordermode}
+
+Verify Section After Changing To Order Mode
+    [Arguments]    ${section}
+    Wait Until Element Is Visible    xpath=//*[@id="sticky-filter"]/form/div[2]/div[5]/div[2]/input    timeout=10s
+    ${section_value}    Get Value    xpath=//*[@id="sticky-filter"]/form/div[2]/div[5]/div[2]/input
+    Should Be Equal    ${section_value}    ${section}
+    sleep    5s
+
+Order Staff In Section
+    [Arguments]    ${from_staff}    ${to_staff}
+    ${position_from}    Find Employee In Table    sa_nickname
+    Log    ${position_from}
+    ${position_to}    Find Employee In Table    Jimmy
+    Log    ${position_to}
+    Drag And Drop    xpath=//*[@id="jssortable"]/div[${position_from}]/div[1]    xpath=//*[@id="jssortable"]/div[${position_to}]/div[1]
+    sleep    2s
+    ${position_from1}    Find Employee In Table    sa_nickname
+    Log    ${position_from}
+    ${position_to1}    Find Employee In Table    Jimmy
+    Log    ${position_to}
+    [Return]    ${position_from1}    ${position_to1}
+
+Customize Order User
+    [Arguments]    ${position}    ${level_sort}
+    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/i    timeout=10s
+    Mouse Over    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/i
+    Sleep    3s
+    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/div/span[contains(text(),'${level_sort}')]    timeout=10s
+    Click Element    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/div/span[contains(text(),'${level_sort}')]
+
+Verify After Customized Ordering
+    [Arguments]    ${count}    ${position_before}    ${level_sort}
+    ${position_after}    ${count}
+
+Add/Edit Default Shift
+    [Arguments]    ${position}    ${default_shift}=${EMPTY}    ${currentwk}=${EMPTY}    ${action}=${EMPTY}
+    [Documentation]    Edit Default shift, Shift of weekday must be followed
+    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/i    timeout=10s
+    Click Element    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/i
+    ${bg_color}    Run keyword if    '${default_shift}'!='${EMPTY}'    Assign Shift_default Shift    ${position}    ${default_shift}
+    Verify Assigned Shift In Row_Default Shift    ${position}    ${default_shift}    ${bg_color}
+    Run keyword if    '${currentwk}'=='1'    Click Element    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/div[4]/label
+    Run keyword if    '${action}'=='Apply'    Run keywords    Click Element    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/div[5]/a[contains(text(),'${action}')]
+    ...    AND    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/div[1]/i    timeout=20s
+    ...    AND    Click Element    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/div[1]/i
+    Run keyword if    '${action}'=='Cancel'    Run keywords    Click Element    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/div[5]/a[contains(text(),'${action}')]
+    [Return]    ${bg_color}
+
+Verify Assigned Shift In Row_Default Shift
+    [Arguments]    ${location}    ${shift}    ${bg_code}
+    : FOR    ${i}    IN RANGE    1    9
+    \    ${shift_txt}    Get Text    xpath=//*[@id="jssortable"]/div[${location}]/div[1]/div[2]/div[1]/div[3]/div/div[${i}]/div/span
+    \    Should Be Equal    ${shift_txt}    ${shift}
+    \    ${code_color_web}    Get Element Attribute    xpath=//*[@id="jssortable"]/div[${location}]/div[1]/div[2]/div[1]/div[3]/div/div[${i}]/div/span@style
+    \    Should Be Equal    ${code_color_web}    ${bg_code}
+
+Assign Shift_default Shift
+    [Arguments]    ${position}    ${shift}
+    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/div[3]//div[1]/div/span    timeout=10s
+    Click Element    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/div[3]//div[1]/div/span
+    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/div[3]//div[1]//div[3]/input    timeout=10s
+    Input Text    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/div[3]//div[1]//div[3]/input    ${shift}
+    : FOR    ${i}    IN RANGE    1    20
+    \    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/div[3]/div/div[1]/div/div/div[4]/ul/li[${i}]/span[2]
+    \    Run Keyword If    '${status}'!='True'    Run keywords    Log    ${shift} has been deleted or not existing in system
+    \    ...    AND    Exit For Loop
+    \    ${shift_text}    Run Keyword If    '${status}'=='True'    Get Text    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/div[3]/div/div[1]/div/div/div[4]/ul/li[${i}]/span[2]
+    \    ${background_color}    Run Keyword If    '${shift_text}'=='${shift}'    Get Background Shift Color_default shift    ${position}    ${i}
+    \    Run Keyword If    '${shift_text}'=='${shift}'    Run keywords    Click Element    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/div[3]/div/div[1]/div/div/div[4]/ul/li[${i}]/span[2]
+    \    ...    AND    Exit For Loop
+    [Return]    ${background_color}
+
+Get Background Shift Color_default shift
+    [Arguments]    ${position}    ${i}
+    Comment    ${code_color_web}    Get Element Attribute    xpath=//*[@id="jssortable"]/div[2]/div[2]//div[4]/ul/li[1]@data-bgcolor
+    ${code_color_web}    Get Element Attribute    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/div[3]/div/div[1]/div/div/div[4]/ul/li[${i}]/span[1]@style
+    Comment    ${code_color_web1}    Set Variable    '${code_color_web}
+    Comment    ${code_color_background}    Remove String    ${code_color_web1}    '#
+    [Return]    ${code_color_web}
+
+Setting Default Shift
+    [Arguments]    ${position}    ${default_shift}=${EMPTY}    ${mo}=${EMPTY}    ${tue}=${EMPTY}    ${wed}=${EMPTY}    ${thu}=${EMPTY}
+    ...    ${fri}=${EMPTY}    ${sat}=${EMPTY}    ${sun}=${EMPTY}    ${currentwk}=${EMPTY}    ${action}=${EMPTY}
+    @{bg_colorlist}    Create list
+    # CLick on Default shift icon
+    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/i    timeout=10s
+    Click Element    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/i
+    : FOR    ${i}    IN RANGE    1    9
+    \    ${bg_color1}    Run keyword if    '${default_shift}'!='${EMPTY}' and ${i}==1    Change Shift_default Shift    ${position}    ${i}
+    \    ...    ${default_shift}
+    \    Run Keyword Unless    '${bg_color1}'=='${NONE}'    Append To List    ${bg_colorlist}    ${bg_color1}
+    \    Run keyword if    '${default_shift}'!='${EMPTY}' and ${i}==1    Continue For Loop
+    \    ${bg_color2}    Run keyword if    '${mo}'!='${EMPTY}' and ${i}==2    Change Shift_default Shift    ${position}    ${i}
+    \    ...    ${mo}
+    \    Run Keyword Unless    '${bg_color2}'=='${NONE}'    Append To List    ${bg_colorlist}    ${bg_color2}
+    \    Run keyword if    '${mo}'!='${EMPTY}' and ${i}==2    Continue For Loop
+    \    ${bg_color3}    Run keyword if    '${tue}'!='${EMPTY}' and ${i}==3    Change Shift_default Shift    ${position}    ${i}
+    \    ...    ${tue}
+    \    Run Keyword Unless    '${bg_color3}'=='${NONE}'    Append To List    ${bg_colorlist}    ${bg_color3}
+    \    Run keyword if    '${tue}'!='${EMPTY}' and ${i}==3    Continue For Loop
+    \    ${bg_color4}    Run keyword if    '${wed}'!='${EMPTY}' and ${i}==4    Change Shift_default Shift    ${position}    ${i}
+    \    ...    ${wed}
+    \    Run Keyword Unless    '${bg_color4}'=='${NONE}'    Append To List    ${bg_colorlist}    ${bg_color4}
+    \    Run keyword if    '${wed}'!='${EMPTY}' and ${i}==4    Continue For Loop
+    \    ${bg_color5}    Run keyword if    '${thu}'!='${EMPTY}' and ${i}==5    Change Shift_default Shift    ${position}    ${i}
+    \    ...    ${thu}
+    \    Run Keyword Unless    '${bg_color5}'=='${NONE}'    Append To List    ${bg_colorlist}    ${bg_color5}
+    \    Run keyword if    '${thu}'!='${EMPTY}' and ${i}==5    Continue For Loop
+    \    ${bg_color6}    Run keyword if    '${fri}'!='${EMPTY}' and ${i}==6    Change Shift_default Shift    ${position}    ${i}
+    \    ...    ${fri}
+    \    Run Keyword Unless    '${bg_color6}'=='${NONE}'    Append To List    ${bg_colorlist}    ${bg_color6}
+    \    Run keyword if    '${fri}'!='${EMPTY}' and ${i}==6    Continue For Loop
+    \    ${bg_color7}    Run keyword if    '${sat}'!='${EMPTY}' and ${i}==7    Change Shift_default Shift    ${position}    ${i}
+    \    ...    ${sat}
+    \    Run Keyword Unless    '${bg_color7}'=='${NONE}'    Append To List    ${bg_colorlist}    ${bg_color7}
+    \    Run keyword if    '${sat}'!='${EMPTY}' and ${i}==7    Continue For Loop
+    \    ${bg_color8}    Run keyword if    '${sun}'!='${EMPTY}' and ${i}==8    Change Shift_default Shift    ${position}    ${i}
+    \    ...    ${sun}
+    \    Run Keyword Unless    '${bg_color8}'=='${NONE}'    Append To List    ${bg_colorlist}    ${bg_color8}
+    Run keyword if    '${currentwk}'=='1'    Click Element    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/div[4]/label
+    Run keyword if    '${action}'=='Apply'    Run keywords    Click Element    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/div[5]/a[contains(text(),'${action}')]
+    ...    AND    Wait Until Element Contains    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/div[5]/span[contains(text(),'Updated successfully')]    Updated successfully
+    ...    AND    Click Element    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/div[1]/i
+    Run keyword if    '${action}'=='Cancel'    Run keywords    Click Element    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/div[5]/a[contains(text(),'${action}')]
+    [Return]    @{bg_colorlist}
+
+Change Shift_default Shift
+    [Arguments]    ${position}    ${po_day}    ${shift}
+    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/div[3]//div[${po_day}]/div/span    timeout=10s
+    Click Element    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/div[3]//div[${po_day}]/div/span
+    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/div[3]//div[1]//div[3]/input    timeout=10s
+    Input Text    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/div[3]//div[1]//div[3]/input    ${shift}
+    : FOR    ${i}    IN RANGE    1    20
+    \    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/div[3]/div/div[${po_day}]/div/div/div[4]/ul/li[${i}]/span[2]
+    \    Run Keyword If    '${status}'!='True'    Run keywords    Log    ${shift} has been deleted or not existing in system
+    \    ...    AND    Exit For Loop
+    \    ${shift_text}    Run Keyword If    '${status}'=='True'    Get Text    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/div[3]/div/div[${po_day}]/div/div/div[4]/ul/li[${i}]/span[2]
+    \    ${background_color}    Run Keyword If    '${shift_text}'=='${shift}'    Get Background Shift Color_Change default shift    ${position}    ${po_day}
+    \    ...    ${i}
+    \    Run Keyword If    '${shift_text}'=='${shift}'    Run keywords    Click Element    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/div[3]/div/div[${po_day}]/div/div/div[4]/ul/li[${i}]/span[2]
+    \    ...    AND    Exit For Loop
+    [Return]    ${background_color}
+
+Get Background Shift Color_Change default shift
+    [Arguments]    ${position}    ${po_day}    ${i}
+    Comment    ${code_color_web}    Get Element Attribute    xpath=//*[@id="jssortable"]/div[2]/div[2]//div[4]/ul/li[1]@data-bgcolor
+    ${code_color_web}    Get Element Attribute    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/div[3]/div/div[${po_day}]/div/div/div[4]/ul/li[${i}]/span[1]@style
+    Comment    ${code_color_web1}    Set Variable    '${code_color_web}
+    Comment    ${code_color_background}    Remove String    ${code_color_web1}    '#
+    [Return]    ${code_color_web}
+
+Verify Setting Default Shift
+    [Arguments]    ${location}    ${shiftlist}    ${bg_codelist}
+    @{shift_list}    Create List
+    @{bg_list}    Create List
+    : FOR    ${i}    IN RANGE    1    9
+    \    ${shift_txt}    Get Text    xpath=//*[@id="jssortable"]/div[${location}]/div[1]/div[2]/div[1]/div[3]/div/div[${i}]/div/span
+    \    Append To List    ${shift_list}    ${shift_txt}
+    \    ${bg_code}    Get Element Attribute    xpath=//*[@id="jssortable"]/div[${location}]/div[1]/div[2]/div[1]/div[3]/div/div[${i}]/div/span@style
+    \    Append To List    ${bg_list}    ${bg_code}
+    Log    ${shift_list}
+    Log    ${bg_list}
+    Should Be Equal    ${shift_list}    ${shiftlist}
+    Should Be Equal    ${bg_list}    ${bg_codelist}
+
+Navigate To Default Shift Setting
+    [Arguments]    ${position}
+    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/i    timeout=10s
+    Click Element    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/i
+
+Verify Default Shift Form
+    [Arguments]    ${position}    ${nickname}
+    ${staff}    get Text    Xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/div[1]/b
+    Should Be Equal    ${staff}    ${nickname}
+    ${note}    Get Text    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/p
+    Should Be Equal    ${note}    Note: The Default Shift runs every Friday at 00:00 (GMT+7) to apply for next week
+    @{days}    create list    DEFAULT SHIFT    MON    TUE    WED    THU
+    ...    FRI    SAT    SUN
+    @{get_days}    Create List
+    : FOR    ${i}    IN RANGE    1    9
+    \    ${text}    Get text    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/div[2]/div/div[${i}]
+    \    Append to list    ${get_days}    ${text}
+    Should Be Equal    ${get_days}    ${days}
+    ${currentweek}    Get Current Range Date
+    ${currentwk_from}    Get Text    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[2]/div[1]/div[4]/label
+    Should Be Equal    ${currentwk_from}    Apply default shifts for current week (${currentweek})
+
+Verify Assigned Shift In Row_xtest
+    [Arguments]    ${location}    ${shiftlist}    ${bg_codelist}
+    @{shift_list}    Create List
+    @{bg_list}    Create List
+    : FOR    ${i}    IN RANGE    1    8
+    \    ${shift_txt}    Get Text    xpath=//*[@id="jssortable"]/div[${location}]/div[2]/div[${i}]/div/span
+    \    Append To List    ${shift_list}    ${shift_txt}
+    \    ${bg_code}    Get Element Attribute    xpath=//*[@id="jssortable"]/div[${location}]/div[2]/div[${i}]/div/span@style
+    \    Append To List    ${bg_list}    ${bg_code}
+    Log    ${shift_list}
+    Log    ${bg_list}
+    Should Be Equal    ${shift_list}    ${shiftlist}
+    Should Be Equal    ${bg_list}    ${bg_codelist}
+
+Add Remark To Staff
+    [Arguments]    ${position}    ${content}    ${action}=${EMPTY}
+    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[1]/div[2]/p/i    timeout=10s
+    Click Element    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[1]/div[2]/p/i
+    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[1]/div[2]/div/div[1]/textarea    timeout=10s
+    Input Text    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[1]/div[2]/div/div[1]/textarea    ${content}
+    Run keyword if    '${action}'!='${EMPTY}' and '${action}'=='Cancel'    Click Element    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[1]/div[2]/div/div[2]/a[contains(text(),'${action}')]
+    Run keyword if    '${action}'!='${EMPTY}' and '${action}'=='Save'    Click Element    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[1]/div[2]/div/div[2]/a[contains(text(),'${action}')]
+
+Verify Added/Edit Remark To Staff
+    [Arguments]    ${position}    ${content}
+    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[1]/div[2]/p/span    timeout=20s
+    Mouse Over    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[1]/div[2]/p/span
+    Sleep    1s
+    Mouse Out    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[1]/div[2]/p/span
+    ${text}    get text    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[1]/div[2]/p/span
+    Should Be Equal    ${text}    ${content}
+
+Upload Working Shift
+    [Arguments]    ${file_path}
+    Wait Until Element Is Visible    ${upload_btn}    timeout=60s
+    Click Element    ${upload_btn}
+    Choose File    xpath=//*[@id="ExcelFile"]    ${file_path}
+    sleep    3s
+    Wait Until Element Is Visible    ${validate_btn}    timeout=60s
+    Click Element    ${validate_btn}
+    Wait Until Element Is Visible    ${upload_cfirm}    timeout=60s
+    Click Element    ${upload_cfirm}
+    Confirmation    Uploaded succesfully    OK
+
+Get Shift Of Staff In Upload File
+    [Arguments]    ${row}
+    ${nickname}    Read Excel Cell    ${row}    2
+    @{my_data_list}    Create List
+    : FOR    ${i}    IN RANGE    3    10
+    \    ${value_cell}    Read Excel Cell    ${row}    ${i}    Sheet1
+    \    Append To List    ${my_data_list}    ${value_cell}
+    Log    ${my_data_list}
+    [Return]    ${nickname}    @{my_data_list}
+
+Get Shift From File And Verify Shift After Uploading Successully
+    [Arguments]    ${file_upload}    ${max_row}
+    [Documentation]    Upload staff's working shift and verify uploaded shift
+    ${doc_id}    Set Variable    mt1
+    Open Excel Document    ${file_upload}    ${doc_id}
+    : FOR    ${row}    IN RANGE    2    ${max_row}
+    \    ${nickname}    @{shift_excel}    Get Shift Of Staff In Upload File    ${row}
+    \    Run Keyword If    '${nickname}'=='None'    Exit For Loop
+    \    Search Employee    ${nickname}
+    \    ${position}    Find Employee In Table    ${nickname}
+    \    Verify Assigned Shift In Row_Without Background    ${position}    ${shift_excel}
+    Close All Excel Documents
+
+Verify Assigned Shift In Row_Without Background
+    [Arguments]    ${location}    ${shiftlist_expected}
+    Log    ${shiftlist_expected}
+    @{shift_list}    Create List
+    : FOR    ${i}    IN RANGE    1    8
+    \    ${shift_txt}    Get Text    xpath=//*[@id="jssortable"]/div[${location}]/div[2]/div[${i}]/div/span
+    \    Append To List    ${shift_list}    ${shift_txt}
+    Log    ${shift_list}
+    Should Be Equal    ${shift_list}    ${shiftlist_expected}
+    Verify Modified By User    ${user_login}    ${location}
+
+Verify Info Staff_Working Shift
+    [Arguments]    ${position}    ${ext}    ${fone}    ${mail}
+    Click Element    xpath=//*[@id="jssortable"]/div[${position}]/div[1]/div[1]/div[2]/span[1]/a
+    Wait Until Element Is Visible    xpath=//span/ul/li[1]/a/span    timeout=10s    #extendsion
+    ${extension}    Get Text    xpath=//span/ul/li[1]/a/span
+    ${phone}    Get Text    xpath=//span/ul/li[2]/a/span
+    ${email}    Get Text    xpath=//span/ul/li[3]/a/span
+    ${ext_status}    Run Keyword And Return Status    Should Be Equal    ${ext}    ${extension}
+    Run keyword if    '${ext_status}'=='True'    Log    Extension is correct
+    ${fone_status}    Run Keyword And Return Status    Should Be Equal    ${fone}    ${phone}
+    Run keyword if    '${fone_status}'=='True'    Log    Phone is correct
+    ${email_status}    Run Keyword And Return Status    Should Be Equal    ${email}    ${mail}
+    Run keyword if    '${email_status}'=='True'    Log    Email is correct
+
+Get Modified By User
+    [Arguments]    ${position}
+    ${name}    Get Text    xpath=//*[@id="jssortable"]/div[${position}]/div[3]/div[1]
+    [Return]    ${name}
+
+Verify Modified By User
+    [Arguments]    ${user}    ${position}    ${datetime}=${EMPTY}
+    ${modified_user}    Get Modified By User    ${position}
+    Should Be Equal    ${modified_user}    ${user}
+    Mouse Over    xpath=//*[@id="jssortable"]/div[${position}]/div[3]/div[1]
+    ${ttip}    Get Text    xpath=//*[@id="jssortable"]/div[${position}]/div[3]/div[1]/span
+    Run Keyword If    '${datetime}'!='${EMPTY}'    Should Be Equal    ${datetime}    ${ttip}
+
+Return DateTime GMT+8
+    ${d}    Get Current Date
+    ${date} =    Add Time To Date    ${d}    60 minutes
+    ${date}    Convert Date    ${date}    result_format=%m/%d/%Y %I:%M %p
+    ${date}    Set Variable    ${date} (GMT+8)
+    Comment    Log    ${date}
+    [Return]    ${date}
+
+Search
+    Click Element    xpath=//*[@id="sticky-filter"]/form/div[2]//a[contains(text(),'Search')]
+
+Su
+    ${currentdate}    Get Current Date
+    ${monday}    Subtract Time From Date    ${currentdate}    6 days
+    ${tuesday}    Subtract Time From Date    ${currentdate}    5 days
+    ${wednesday}    Subtract Time From Date    ${currentdate}    4 days
+    ${thurday}    Subtract Time From Date    ${currentdate}    3 days
+    ${friday}    Subtract Time From Date    ${currentdate}    2 days
+    ${saturday}    Subtract Time From Date    ${currentdate}    1 days
+    ${sunday}    Get Current Date
+    ${monday}    Convert Date    ${monday}    result_format=%m/%d/%Y
+    ${tuesday}    Convert Date    ${tuesday}    result_format=%m/%d/%Y
+    ${wednesday}    Convert Date    ${wednesday}    result_format=%m/%d/%Y
+    ${thurday}    Convert Date    ${thurday}    result_format=%m/%d/%Y
+    ${friday}    Convert Date    ${friday}    result_format=%m/%d/%Y
+    ${saturday}    Convert Date    ${saturday}    result_format=%m/%d/%Y
+    ${sunday}    Convert Date    ${sunday}    result_format=%m/%d/%Y
+    [Return]    ${monday}    ${tuesday}    ${wednesday}    ${thurday}    ${friday}    ${saturday}
+    ...    ${sunday}
+
+Sa
+    ${currentdate}    Get Current Date
+    ${monday}    Subtract Time From Date    ${currentdate}    5 days
+    ${tuesday}    Subtract Time From Date    ${currentdate}    4 days
+    ${wednesday}    Subtract Time From Date    ${currentdate}    3 days
+    ${thurday}    Subtract Time From Date    ${currentdate}    2 days
+    ${friday}    Subtract Time From Date    ${currentdate}    1 days
+    ${saturday}    Get Current Date
+    ${sunday}    Add Time To Date    ${currentdate}    1 days
+    ${monday}    Convert Date    ${monday}    result_format=%m/%d/%Y
+    ${tuesday}    Convert Date    ${tuesday}    result_format=%m/%d/%Y
+    ${wednesday}    Convert Date    ${wednesday}    result_format=%m/%d/%Y
+    ${thurday}    Convert Date    ${thurday}    result_format=%m/%d/%Y
+    ${friday}    Convert Date    ${friday}    result_format=%m/%d/%Y
+    ${saturday}    Convert Date    ${saturday}    result_format=%m/%d/%Y
+    ${sunday}    Convert Date    ${sunday}    result_format=%m/%d/%Y
+    [Return]    ${monday}    ${tuesday}    ${wednesday}    ${thurday}    ${friday}    ${saturday}
+    ...    ${sunday}
+
+Fri
+    ${currentdate}    Get Current Date
+    ${monday}    Subtract Time From Date    ${currentdate}    4 days
+    ${tuesday}    Subtract Time From Date    ${currentdate}    3 days
+    ${wednesday}    Subtract Time From Date    ${currentdate}    2 days
+    ${thurday}    Subtract Time From Date    ${currentdate}    1 days
+    ${friday}    Get Current Date
+    ${saturday}    Add Time To Date    ${currentdate}    1 days
+    ${sunday}    Add Time To Date    ${currentdate}    2 days
+    ${monday}    Convert Date    ${monday}    result_format=%m/%d/%Y
+    ${tuesday}    Convert Date    ${tuesday}    result_format=%m/%d/%Y
+    ${wednesday}    Convert Date    ${wednesday}    result_format=%m/%d/%Y
+    ${thurday}    Convert Date    ${thurday}    result_format=%m/%d/%Y
+    ${friday}    Convert Date    ${friday}    result_format=%m/%d/%Y
+    ${saturday}    Convert Date    ${saturday}    result_format=%m/%d/%Y
+    ${sunday}    Convert Date    ${sunday}    result_format=%m/%d/%Y
+    [Return]    ${monday}    ${tuesday}    ${wednesday}    ${thurday}    ${friday}    ${saturday}
+    ...    ${sunday}
+
+Thu
+    ${currentdate}    Get Current Date
+    ${monday}    Subtract Time From Date    ${currentdate}    3 days
+    ${tuesday}    Subtract Time From Date    ${currentdate}    2 days
+    ${wednesday}    Subtract Time From Date    ${currentdate}    1 days
+    ${thurday}    Get Current Date
+    ${friday}    Add Time To Date    ${currentdate}    1 days
+    ${saturday}    Add Time To Date    ${currentdate}    2 days
+    ${sunday}    Add Time To Date    ${currentdate}    3 days
+    ${monday}    Convert Date    ${monday}    result_format=%m/%d/%Y
+    ${tuesday}    Convert Date    ${tuesday}    result_format=%m/%d/%Y
+    ${wednesday}    Convert Date    ${wednesday}    result_format=%m/%d/%Y
+    ${thurday}    Convert Date    ${thurday}    result_format=%m/%d/%Y
+    ${friday}    Convert Date    ${friday}    result_format=%m/%d/%Y
+    ${saturday}    Convert Date    ${saturday}    result_format=%m/%d/%Y
+    ${sunday}    Convert Date    ${sunday}    result_format=%m/%d/%Y
+    [Return]    ${monday}    ${tuesday}    ${wednesday}    ${thurday}    ${friday}    ${saturday}
+    ...    ${sunday}
+
+We
+    ${currentdate}    Get Current Date
+    ${monday}    Subtract Time From Date    ${currentdate}    2 days
+    ${tuesday}    Subtract Time From Date    ${currentdate}    1 days
+    ${wedneday}    Get Current Date
+    ${thurday}    Add Time To Date    ${currentdate}    1 days
+    ${friday}    Add Time To Date    ${currentdate}    2 days
+    ${saturday}    Add Time To Date    ${currentdate}    3 days
+    ${sunday}    Add Time To Date    ${currentdate}    4 days
+    ${monday}    Convert Date    ${monday}    result_format=%m/%d/%Y
+    ${tuesday}    Convert Date    ${tuesday}    result_format=%m/%d/%Y
+    ${wednesday}    Convert Date    ${wedneday}    result_format=%m/%d/%Y
+    ${thurday}    Convert Date    ${thurday}    result_format=%m/%d/%Y
+    ${friday}    Convert Date    ${friday}    result_format=%m/%d/%Y
+    ${saturday}    Convert Date    ${saturday}    result_format=%m/%d/%Y
+    ${sunday}    Convert Date    ${sunday}    result_format=%m/%d/%Y
+    [Return]    ${monday}    ${tuesday}    ${wednesday}    ${thurday}    ${friday}    ${saturday}
+    ...    ${sunday}
+
+Tu
+    ${currentdate}    Get Current Date
+    ${monday}    Subtract Time From Date    ${currentdate}    1 days
+    ${tuesday}    Get Current Date
+    ${wednesday}    Add Time To Date    ${currentdate}    1 days
+    ${thurday}    Add Time To Date    ${currentdate}    2 days
+    ${friday}    Add Time To Date    ${currentdate}    3 days
+    ${saturday}    Add Time To Date    ${currentdate}    4 days
+    ${sunday}    Add Time To Date    ${currentdate}    5 days
+    ${monday}    Convert Date    ${monday}    result_format=%m/%d/%Y
+    ${tuesday}    Convert Date    ${tuesday}    result_format=%m/%d/%Y
+    ${wednesday}    Convert Date    ${wednesday}    result_format=%m/%d/%Y
+    ${thurday}    Convert Date    ${thurday}    result_format=%m/%d/%Y
+    ${friday}    Convert Date    ${friday}    result_format=%m/%d/%Y
+    ${saturday}    Convert Date    ${saturday}    result_format=%m/%d/%Y
+    ${sunday}    Convert Date    ${sunday}    result_format=%m/%d/%Y
+    [Return]    ${monday}    ${tuesday}    ${wednesday}    ${thurday}    ${friday}    ${saturday}
+    ...    ${sunday}
+
+Mo
+    ${currentdate}    Get Current Date
+    ${monday}    Get Current Date
+    ${tuesday}    Add Time To Date    ${currentdate}    1 days
+    ${wednesday}    Add Time To Date    ${currentdate}    2 days
+    ${thurday}    Add Time To Date    ${currentdate}    3 days
+    ${friday}    Add Time To Date    ${currentdate}    4 days
+    ${saturday}    Add Time To Date    ${currentdate}    5 days
+    ${sunday}    Add Time To Date    ${currentdate}    6 days
+    ${monday}    Convert Date    ${monday}    result_format=%m/%d/%Y
+    ${tuesday}    Convert Date    ${tuesday}    result_format=%m/%d/%Y
+    ${wednesday}    Convert Date    ${wednesday}    result_format=%m/%d/%Y
+    ${thurday}    Convert Date    ${thurday}    result_format=%m/%d/%Y
+    ${friday}    Convert Date    ${friday}    result_format=%m/%d/%Y
+    ${saturday}    Convert Date    ${saturday}    result_format=%m/%d/%Y
+    ${sunday}    Convert Date    ${sunday}    result_format=%m/%d/%Y
+    [Return]    ${monday}    ${tuesday}    ${wednesday}    ${thurday}    ${friday}    ${saturday}
+    ...    ${sunday}
+
+Return Days Of Week
+    ${b}    Get Current Date    result_format=%A
+    @{days}    Create List    Monday    Tuesday    Wednesday    Thursday    Friday
+    ...    Saturday    Sunday
+    : FOR    ${i}    IN    @{days}
+    \    ${monday}    ${tuesday}    ${wednesday}    ${thurday}    ${friday}    ${saturday}
+    \    ...    ${sunday}    Run Keyword If    '${b}'=='Monday'    Mo
+    \    Run keyword if    '${monday}'!='None'    Exit For Loop
+    \    ${monday}    ${tuesday}    ${wednesday}    ${thurday}    ${friday}    ${saturday}
+    \    ...    ${sunday}    Run Keyword If    '${b}'=='Tuesday'    Tu
+    \    Run keyword if    '${monday}'!='None'    Exit For Loop
+    \    ${monday}    ${tuesday}    ${wednesday}    ${thurday}    ${friday}    ${saturday}
+    \    ...    ${sunday}    Run Keyword If    '${b}'=='Wednesday'    We
+    \    Run keyword if    '${monday}'!='None'    Exit For Loop
+    \    ${monday}    ${tuesday}    ${wednesday}    ${thurday}    ${friday}    ${saturday}
+    \    ...    ${sunday}    Run Keyword If    '${b}'=='Thursday'    Thu
+    \    Run keyword if    '${monday}'!='None'    Exit For Loop
+    \    ${monday}    ${tuesday}    ${wednesday}    ${thurday}    ${friday}    ${saturday}
+    \    ...    ${sunday}    Run Keyword If    '${b}'=='Friday'    Fri
+    \    Run keyword if    '${monday}'!='None'    Exit For Loop
+    \    ${monday}    ${tuesday}    ${wednesday}    ${thurday}    ${friday}    ${saturday}
+    \    ...    ${sunday}    Run Keyword If    '${b}'=='Saturday'    Sa
+    \    Run keyword if    '${monday}'!='None'    Exit For Loop
+    \    ${monday}    ${tuesday}    ${wednesday}    ${thurday}    ${friday}    ${saturday}
+    \    ...    ${sunday}    Run Keyword If    '${b}'=='Sunday'    Su
+    \    Run keyword if    '${monday}'!='None'    Exit For Loop
+    [Return]    ${monday}    ${tuesday}    ${wednesday}    ${thurday}    ${friday}    ${saturday}
+    ...    ${sunday}
+
+Verify History Popup
+    [Arguments]    ${nickname}
+    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div[2]/div[3]/div[2]    timeout=20s
+    Click Element    xpath=//*[@id="jssortable"]/div[2]/div[3]/div[2]
+    ${text}    Get Text    xpath=//*[@id="js-modalViewLog"]/div[1]/div/span
+    Should Be Equal    History of ${nickname}    ${text}
+    @{last_action}    Create List
+    @{last_action_expected}    Create List    50    100    200    500
+    Click Element    xpath=//*[@id="js-modalViewLog"]/div[2]/div[1]/div/div[2]/input
+    : FOR    ${i}    IN RANGE    1    5
+    \    ${a}    Get Value    xpath=//*[@id="action-number"]/option[${i}]
+    \    Append To List    ${last_action}    ${a}
+    Should Be Equal    ${last_action}    ${last_action_expected}
+    @{header_list}    Create List
+    @{header_list_expected}    Create List    Date (GMT+8)    Modified by    Action    Old Value    New Value
+    : FOR    ${j}    IN RANGE    1    6
+    \    ${text_header}    Get Text    xpath=//*[@id="js-modalViewLog"]/div[2]/div[2]/table/thead/tr/th[${j}]
+    \    Append To List    ${header_list}    ${text_header}
+    Should Be Equal    ${header_list}    ${header_list_expected}
+    @{content_list}    Create List
+    : FOR    ${index}    IN RANGE    1    6
+    \    ${content}    Get Text    xpath=//*[@id="js-modalViewLog"]/div[2]/div[2]/table/tbody/tr[1]/td[${index}]
+    \    Append To List    ${content_list}    ${content}
+    Log    ${content_list}
+    [Return]    ${content_list}
+
+Get Shifts
+    @{Shift_lst}    Create List
+    : FOR    ${i}    IN RANGE    1    8
+    \    ${shift}    Get Text    xpath=//*[@id="jssortable"]/div[2]/div[2]/div[${i}]/div/span
+    \    Append To List    ${Shift_lst}    ${shift}
+    [Return]    ${Shift_lst}
+
+Close Writelog Popup
+    Click Element    xpath=//*[@id="js-modalViewLog"]/div[1]/a/i
+
+Input Odd
+    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div/div/div[8]/div/div    timeout=120s
+    ${count}    Run keyword If    '${status}'=='True'    Get Matching Xpath Count    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div/div/div[8]/div/div
+    : FOR    ${i}    IN RANGE    1    ${count}+1
+    \    ${rdodds}    Generate Random String    2    12346789
+    \    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[${i}]/div/div[8]/div/div
+    \    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[${i}]/div/div[8]/div/div    market testing, sobet
+    \    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[${i}]/div/div[9]/div/div[1]/div/input
+    \    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[${i}]/div/div[9]/div/div[1]/div/input    -${rdodds}
+    \    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[${i}]/div/div[9]/div/div[2]/div/input
+    \    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[${i}]/div/div[9]/div/div[2]/div/input    ${rdodds}
+    \    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[${i}]/div/div[9]/div/div[3]/div/input
+    \    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[${i}]/div/div[9]/div/div[3]/div/input    -${rdodds}
+    \    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[${i}]/div/div[9]/div/div[4]/div/input
+    \    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[${i}]/div/div[9]/div/div[4]/div/input    ${rdodds}
+    \    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[${i}]/div/div[9]/div/div[5]/div/input
+    \    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[${i}]/div/div[9]/div/div[5]/div/input    -${rdodds}
+    \    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[${i}]/div/div[9]/div/div[6]/div/input
+    \    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[${i}]/div/div[9]/div/div[6]/div/input    ${rdodds}
+    \    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[${i}]/div/div[9]/div/div[7]/div/input
+    \    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[${i}]/div/div[9]/div/div[7]/div/input    -${rdodds}
+    \    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[${i}]/div/div[9]/div/div[8]/div/input
+    \    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[${i}]/div/div[9]/div/div[8]/div/input    ${rdodds}
+    \    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[${i}]/div/div[9]/div/div[9]/div/input
+    \    Press Key    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[${i}]/div/div[9]/div/div[9]/div/input    -${rdodds}
+    \    Comment    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[5]/div/button
+    \    Comment    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[5]/div/button
+    \    Comment    Wait Until Element Is Visible    xpath=/html/body/div[2]/div/div[3]/button[2]
+    \    Comment    Click Element    xpath=/html/body/div[2]/div/div[3]/button[2]
+
+Input Odd_Oldversion
+    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="tblContent_js-odds"]/tbody/tr/td[10]/div/input    timeout=120s
+    ${count}    Run keyword If    '${status}'=='True'    Get Matching Xpath Count    xpath=//*[@id="tblContent_js-odds"]/tbody/tr/td[10]/div/input
+    : FOR    ${i}    IN RANGE    1    ${count}+1
+    \    ${rdodds}    Generate Random String    2    12346789
+    \    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[9]/div/span/input    timeout=10s
+    \    Run Keyword If    '${status}'=='True'    Run Keywords    Input Text    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[9]/div/span/input    -${rdodds}
+    \    ...    AND    Press Key    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[9]/div/span/input    \\13
+    \    ...    ELSE    Run keywords    Scroll Element Into View    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}+5]/td[9]/div/span/input
+    \    ...    AND    Input Text    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[9]/div/span/input    -${rdodds}
+    \    ...    AND    Press Key    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[9]/div/span/input    \\13
+    \    Comment    Input Text    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[9]/div/span/input    -${rdodds}
+    \    Comment    Press Key    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[9]/div/span/input    \\13
+    \    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[10]/div/input    timeout=10s
+    \    Run Keyword If    '${status}'=='True'    Run Keywords    Input Text    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[10]/div/input    -${rdodds}
+    \    ...    AND    Press Key    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[10]/div/input    \\13
+    \    ...    ELSE    Run keywords    Scroll Element Into View    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}+5]/td[10]/div/input
+    \    ...    AND    Input Text    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[10]/div/input    -${rdodds}
+    \    ...    AND    Press Key    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[10]/div/input    \\13
+    \    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[11]/div/input    timeout=10s
+    \    Run Keyword If    '${status}'=='True'    Run Keywords    Input Text    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[11]/div/input    -${rdodds}
+    \    ...    AND    Press Key    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[11]/div/input    \\13
+    \    ...    ELSE    Run keywords    Scroll Element Into View    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}+5]/td[11]/div/input
+    \    ...    AND    Input Text    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[11]/div/input    -${rdodds}
+    \    ...    AND    Press Key    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[11]/div/input    \\13
+    \    Comment    Wait Until Element Is Visible    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[10]/div/input    timeout=10s
+    \    Comment    Input Text    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[10]/div/input    ${rdodds}
+    \    Comment    Press Key    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[10]/div/input    \\13
+    \    Comment    Wait Until Element Is Visible    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[11]/div/input    timeout=10s
+    \    Comment    Input Text    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[11]/div/input    -${rdodds}
+    \    Comment    Press Key    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[11]/div/input    \\13
+    \    Wait Until Element Is Visible    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[12]/div/input    timeout=10s
+    \    Input Text    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[12]/div/input    ${rdodds}
+    \    Press Key    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[12]/div/input    \\13
+    \    Wait Until Element Is Visible    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[13]/div/input    timeout=10s
+    \    Input Text    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[13]/div/input    -${rdodds}
+    \    Press Key    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[13]/div/input    \\13
+    \    Wait Until Element Is Visible    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[14]/div/input    timeout=10s
+    \    Input Text    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[14]/div/input    ${rdodds}
+    \    Press Key    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[14]/div/input    \\13
+    \    Wait Until Element Is Visible    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[15]/div/input    timeout=10s
+    \    Input Text    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[15]/div/input    -${rdodds}
+    \    Press Key    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[15]/div/input    \\13
+    \    Wait Until Element Is Visible    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[16]/div/input    timeout=10s
+    \    Input Text    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[16]/div/input    ${rdodds}
+    \    Press Key    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[16]/div/input    \\13
+    \    Wait Until Element Is Visible    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[17]/div/input    timeout=10s
+    \    Input Text    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[17]/div/input    -${rdodds}
+    \    Press Key    xpath=//*[@id="tblContent_js-odds"]/tbody/tr[${i}]/td[17]/div/input    \\13
+
+Verify Label Of Daily Filter
+    [Arguments]    ${date}    ${employee}    ${section}    ${shift}    ${location}    ${excludecloseacc}
+    ...    ${search}
+    @{expected_list}    Create List    ${date}    ${employee}    ${section}    ${shift}    ${location}
+    ...    ${excludecloseacc}    ${search}
+    @{web_list}    Create List
+    Wait Until Element Is Visible    xpath=//*[@id="sticky-filter"]/form/div[2]/div[2]/div    timeout=30s
+    ${text}    get text    xpath=//*[@id="sticky-filter"]/form/div[2]/div[1]/div
+    Append To List    ${web_list}    ${text}
+    ${text}    get text    xpath=//*[@id="sticky-filter"]/form/div[2]/div[2]/div
+    Append To List    ${web_list}    ${text}
+    ${text}    get text    xpath=//*[@id="sticky-filter"]/form/div[2]/div[3]/div[1]
+    Append To List    ${web_list}    ${text}
+    ${text}    get text    xpath=//*[@id="sticky-filter"]/form/div[2]/div[4]/div[1]
+    Append To List    ${web_list}    ${text}
+    ${text}    get text    xpath=//*[@id="sticky-filter"]/form/div[2]/div[5]/div[1]
+    Append To List    ${web_list}    ${text}
+    ${text}    get text    xpath=//*[@id="sticky-filter"]/form/div[2]/div[6]/label
+    Append To List    ${web_list}    ${text}
+    ${text}    get text    xpath=//*[@id="sticky-filter"]/form/div[2]/div[7]/a[1]
+    Append To List    ${web_list}    ${text}
+    Log    ${web_list}
+    Should Be Equal    ${expected_list}    ${web_list}
+
+Verify By Default Filter_Daily
+    [Arguments]    ${section_value}    ${shift_value}    ${location_value}    ${exclude}
+    @{defaultvalue}    Create List
+    @{filterlist}    Create List    ${section_value}    ${shift_value}    ${location_value}
+    ${text}    Get Value    xpath=//*[@id="section"]/input
+    Append To List    ${defaultvalue}    ${text}
+    ${text}    Get Value    xpath=//*[@id="shift"]/input
+    Append To List    ${defaultvalue}    ${text}
+    ${text}    Get Value    xpath=//*[@id="userLocations"]/input
+    Append To List    ${defaultvalue}    ${text}
+    Run keyword if    '${exclude}'=='1'    Checkbox Should Be Selected    xpath=//*[@id="excludeClosedAccount"]
+    Should Be Equal    ${defaultvalue}    ${filterlist}
+
+Select Shift
+    [Arguments]    ${shift}
+    Comment    Click Element    xpath=//*[@id="shift"]/input
+    Comment    Shift Check/Uncheck All
+    Input Text    xpath=/html/body/main/div[1]/div[1]/form/div[2]/div[4]/div[2]/div[1]/lable/input    ${shift}
+    ${count_result}    Get Matching Xpath Count    xpath=//*[@id="fanex-multiselect-options-shift"]/ul/li[@data-dont-hide-me='true']
+    : FOR    ${i}    IN RANGE    1    ${count_result}+1
+    \    ${text}    Get Text    xpath=//*[@id="fanex-multiselect-options-shift"]/ul/li[@data-dont-hide-me='true']/div/label
+    \    Run Keyword If    '${text}'=='${shift}'    Run keywords    Click Element    xpath=//*[@id="fanex-multiselect-options-shift"]/ul/li[@data-dont-hide-me='true']/div/label
+    \    ...    AND    Exit For Loop
+
+Shift Check/Uncheck All
+    Click Element    xpath=//*[@id="shiftHeaderCheckBox"]
+
+Select Multiple Shifts
+    [Arguments]    @{shifts}
+    Click Element    xpath=//*[@id="shift"]/input
+    Shift Check/Uncheck All
+    ${count}    get length    ${shifts}
+    : FOR    ${i}    IN RANGE    0    ${count}
+    \    Select Shift    @{shifts}[${i}]
+    [Return]    ${count}
+
+Verify Date Displayed Daily Working Shift
+    Click Element    xpath=/html/body/main/div[1]/div[1]/form/div[2]/div[1]/input
+    #Check By Default Date: Must be current date
+    ${month}    Get Text    xpath=//*[@id="ui-datepicker-div"]/div/div/span[1]
+    ${year}    Get Text    xpath=//*[@id="ui-datepicker-div"]/div/div/span[2]
+    Wait Until Element Is Visible    css=.ui-state-highlight    timeout=10s
+    ${day}    Get Text    css=.ui-state-highlight
+    ${date}    Get Current Date    result_format=%B %d, %Y
+    Log    ${date}
+    Should Be Equal    ${month}${SPACE}${day},${SPACE}${year}    ${date}
+    # Check Date is displaying in Bar
+    ${date}    Get Current Date    result_format=%m/%d/%Y
+    ${date_1}    Get Text    xpath=//*[@id="sticky-filter"]/div/div[1]/div[1]/span[3]
+    Should Be Equal    ${date}    ${date_1}
+    Click Element    xpath=/html/body/main/div[1]/div[1]/form/div[2]/div[1]/input
+
+Check Header Of Datagrid
+    [Arguments]    @{header_list}
+    @{headertitle_list}    Create List
+    : FOR    ${i}    IN RANGE    1    6
+    \    ${header}    Get Text    xpath=//*[@id="sticky-header"]/div[${i}]
+    \    Append to list    ${headertitle_list}    ${header}
+    : FOR    ${j}    IN RANGE    1    25
+    \    ${header}    Get Text    xpath=//*[@id="sticky-header"]/div[6]/div[${j}]
+    \    Append to list    ${headertitle_list}    ${header}
+    Should Be Equal    ${headertitle_list}    ${header_list}
+
+Find Employee In Table_Daily
+    [Arguments]    ${employee}
+    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=/html/body/main/div[1]/div[2]/div/div/div/div[2]    timeout=100s
+    ${norow}    Run keyword If    '${status}'=='True'    Get Matching Xpath Count    xpath=/html/body/main/div[1]/div[2]/div/div/div/div[2]
+    : FOR    ${i}    IN RANGE    1    ${norow} + 1
+    \    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=/html/body/main/div[1]/div[2]/div/div/div[${i}]/div[1]/div[2]/p[1]/span
+    \    Run keyword if    '${status}'!='True'    Continue For Loop
+    \    ${nickname}    Run keyword if    '${status}'=='True'    Get Text    xpath=/html/body/main/div[1]/div[2]/div/div/div[${i}]/div[1]/div[2]/p[1]/span
+    \    Comment    ${nickname}    Get Text    xpath=//*[@id="jssortable"]/div[${i}]/div[1]/div[1]/div[2]/span[1]/a
+    \    ${position}    Set Variable If    '${nickname}'=='${employee}'    ${i}
+    \    Run keyword if    '${nickname}'=='${employee}'    Exit For Loop
+    [Return]    ${position}
+
+Verify Employee In Table_Daily
+    [Arguments]    ${position}    ${accountname}    ${section}    ${group}    ${level}    ${shift}
+    ${acc}    Get text    xpath=/html/body/main/div[1]/div[2]/div/div/div[${position}]/div[1]/div[2]/p[1]/span
+    Should Be Equal    ${acc}    ${accountname}
+    ${sect}    Get Text    xpath=/html/body/main/div[1]/div[2]/div/div/div[${position}]/div[1]/div[2]/p[2]/span
+    Run Keyword Unless    '${sect}'=='${EMPTY}'    Should Be Equal    ${sect}    ${section}
+    ${grp}    Get Text    xpath=/html/body/main/div[1]/div[2]/div/div/div[${position}]/div[2]
+    Run Keyword Unless    '${grp}'=='${EMPTY}'    Should Be Equal    ${grp}    ${group}
+    ${lvel}    Get Text    xpath=/html/body/main/div[1]/div[2]/div/div/div[${position}]/div[3]
+    Run Keyword Unless    '${lvel}'=='${EMPTY}'    Should Be Equal    ${lvel}    ${level}
+    ${shf}    Get Text    xpath=/html/body/main/div[1]/div[2]/div/div/div[${position}]/div[5]
+    Run Keyword Unless    '${shf}'=='${EMPTY}'    Should Be Equal    ${shf}    ${shift}
+
+Get CSS Property Value
+    [Arguments]    ${locator}    ${attribute name}
+    ${css}=    Get WebElement    ${locator}
+    ${prop_val}=    Call Method    ${css}    value_of_css_property    ${attribute name}
+    [Return]    ${prop_val}
+
+Verify Items of Department list_checked
+    [Arguments]    @{department_list}
+    @{department_list_web}    Create List
+    Click Element    xpath=//*[@id="department"]/input
+    Checkbox Should Be Selected    xpath=//*[@id="departmentHeaderCheckBox"]
+    ${checkall_txt}    Get Text    xpath=//*[@id="fanex-multiselect-options-department"]/div[3]/ul/li/label
+    Append To List    ${department_list_web}    ${checkall_txt}
+    : FOR    ${i}    IN RANGE    1    17
+    \    ${j}    Evaluate    ${i} - 1
+    \    Checkbox Should Be Selected    xpath=//*[@id="fanex-multiselect-department--option-0-${j}"]
+    \    ${text}    get text    xpath=//*[@id="fanex-multiselect-options-department"]/ul/li[${i}]/div/label
+    \    Append To List    ${department_list_web}    ${text}
+    Should Be Equal    ${department_list_web}    ${department_list}

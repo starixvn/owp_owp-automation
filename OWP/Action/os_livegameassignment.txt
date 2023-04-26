@@ -1,0 +1,126 @@
+*** Settings ***
+Resource          ../Interface/os_livegameassignment.txt
+Library           Collections
+Library           ExtendedSelenium2Library
+Resource          common.txt
+Library           DatabaseLibrary
+
+*** Keywords ***
+Verify From TO Value
+    [Documentation]    - From must be current date
+    ...    - To must be current date + 2
+    ${FROM}    get value    ${from}
+    ${TO}    get value    ${to}
+    Comment    ${Sport}    get text    ${sport_cbx}
+    Comment    ${mstt}    get text    ${matchstt_cbx}
+    ${a}    Get Current Date    result_format=%b %d, %Y
+    Should Be Equal    ${FROM}    ${a}
+    ${c}    get current date
+    ${d}    Add Time To Date    ${c}    2 days
+    ${d1}    Convert Date    ${d}    result_format=%b %d, %Y
+    Should Be Equal    ${d1}    ${TO}
+
+Verify Sport Filter
+    [Arguments]    @{sportlist}
+    Wait Until Element Is Visible    ${sport_cbx}
+    ${sport_hint}    get text    ${sport_cbx}
+    Should Be Equal    ${sport_hint}    All items are selected
+    @{listofsport}    Create List
+    click element    ${sport_cbx}
+    ${all}    Get text    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/label/span/span
+    Checkbox Should Be Selected    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/label/span/input
+    Append To List    ${listofsport}    ${all}
+    :FOR    ${i}    IN RANGE    1    17
+    \    ${text}    get text    //*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/span
+    \    Checkbox Should Be Selected    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/input
+    \    append to list    ${listofsport}    ${text}
+    should be equal    ${listofsport}    ${sportlist}
+
+Verify Match Status Filter
+    [Arguments]    @{matchsttlist}
+    ${def_mstt}    Get Text    ${matchstt_cbx}
+    should be equal    ${def_mstt}    Live
+    Click element    ${matchstt_cbx}
+    @{msttlist}    Create List
+    ${all}    Get text    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[5]/div[2]/div/div[2]/div/label/span/span
+    Checkbox Should Not Be Selected    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[5]/div[2]/div/div[2]/div/label/span/input
+    append to list    ${msttlist}    ${all}
+    :FOR    ${i}    IN RANGE    1    4
+    \    ${text}    get text    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[5]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/span
+    \    Run Keyword If    '${text}'=='Live'    Checkbox Should Be Selected    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[5]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/input
+    \    append to list    ${msttlist}    ${text}
+    should be equal    ${msttlist}    ${matchsttlist}
+
+Verify Unselect All in Sport Filter
+    Click Element    ${sport_cbx}
+    click element    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/label/span/input
+    Checkbox Should Not Be Selected    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/label/span/input
+    :FOR    ${i}    IN RANGE    1    17
+    \    Checkbox Should Not Be Selected    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/input
+
+Select Sport
+    [Arguments]    ${sport1}=${EMPTY}    ${sport2}=${EMPTY}    ${sport3}=${EMPTY}    ${sport4}=${EMPTY}    ${sport5}=${EMPTY}    ${sport6}=${EMPTY}
+    ...    ${sport7}=${EMPTY}    ${sport8}=${EMPTY}    ${sport9}=${EMPTY}    ${sport10}=${EMPTY}    ${sport11}=${EMPTY}    ${sport12}=${EMPTY}
+    ...    ${sport13}=${EMPTY}    ${sport14}=${EMPTY}    ${sport15}=${EMPTY}    ${sport16}=${EMPTY}
+    Click Element    ${sport_cbx}
+    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/label/span/span
+    :FOR    ${i}    IN RANGE    1    17
+    \    ${text}    get text    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/span
+    \    Run Keyword If    '${text}'=='${sport1}'    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/span
+    \    Run Keyword If    '${text}'=='${sport2}'    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/span
+    \    Run Keyword If    '${text}'=='${sport3}'    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/span
+    \    Run Keyword If    '${text}'=='${sport4}'    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/span
+    \    Run Keyword If    '${text}'=='${sport5}'    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/span
+    \    Run Keyword If    '${text}'=='${sport6}'    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/span
+    \    Run Keyword If    '${text}'=='${sport7}'    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/span
+    \    Run Keyword If    '${text}'=='${sport8}'    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/span
+    \    Run Keyword If    '${text}'=='${sport9}'    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/span
+    \    Run Keyword If    '${text}'=='${sport10}'    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/span
+    \    Run Keyword If    '${text}'=='${sport11}'    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/span
+    \    Run Keyword If    '${text}'=='${sport12}'    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/span
+    \    Run Keyword If    '${text}'=='${sport13}'    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/span
+    \    Run Keyword If    '${text}'=='${sport14}'    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/span
+    \    Run Keyword If    '${text}'=='${sport15}'    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/span
+    \    Run Keyword If    '${text}'=='${sport16}'    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/span
+
+Verify Selected Sport
+    [Arguments]    ${sport1}=${EMPTY}    ${sport2}=${EMPTY}    ${sport3}=${EMPTY}    ${sport4}=${EMPTY}    ${sport5}=${EMPTY}    ${sport6}=${EMPTY}
+    ...    ${sport7}=${EMPTY}    ${sport8}=${EMPTY}    ${sport9}=${EMPTY}    ${sport10}=${EMPTY}    ${sport11}=${EMPTY}    ${sport12}=${EMPTY}
+    ...    ${sport13}=${EMPTY}    ${sport14}=${EMPTY}    ${sport15}=${EMPTY}    ${sport16}=${EMPTY}
+    :FOR    ${i}    IN RANGE    1    17
+    \    ${text}    get text    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/span
+    \    Run Keyword If    '${text}'=='${sport1}'    Checkbox Should Be Selected    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/input
+    \    Run Keyword If    '${text}'=='${sport2}'    Checkbox Should Be Selected    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/input
+    \    Run Keyword If    '${text}'=='${sport3}'    Checkbox Should Be Selected    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/input
+    \    Run Keyword If    '${text}'=='${sport4}'    Checkbox Should Be Selected    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/input
+    \    Run Keyword If    '${text}'=='${sport5}'    Checkbox Should Be Selected    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/input
+    \    Run Keyword If    '${text}'=='${sport6}'    Checkbox Should Be Selected    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/input
+    \    Run Keyword If    '${text}'=='${sport7}'    Checkbox Should Be Selected    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/input
+    \    Run Keyword If    '${text}'=='${sport8}'    Checkbox Should Be Selected    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/input
+    \    Run Keyword If    '${text}'=='${sport9}'    Checkbox Should Be Selected    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/input
+    \    Run Keyword If    '${text}'=='${sport10}'    Checkbox Should Be Selected    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/input
+    \    Run Keyword If    '${text}'=='${sport11}'    Checkbox Should Be Selected    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/input
+    \    Run Keyword If    '${text}'=='${sport12}'    Checkbox Should Be Selected    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/input
+    \    Run Keyword If    '${text}'=='${sport13}'    Checkbox Should Be Selected    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/input
+    \    Run Keyword If    '${text}'=='${sport14}'    Checkbox Should Be Selected    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/input
+    \    Run Keyword If    '${text}'=='${sport15}'    Checkbox Should Be Selected    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/input
+    \    Run Keyword If    '${text}'=='${sport16}'    Checkbox Should Be Selected    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[4]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/input
+
+Select Match Status
+    [Arguments]    ${status1}=${EMPTY}    ${status2}=${EMPTY}    ${status3}=${EMPTY}
+    Click Element    ${matchstt_cbx}
+    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[5]/div[2]/div/div[2]/div/label/span/span
+    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[5]/div[2]/div/div[2]/div/label/span/span
+    :FOR    ${i}    IN RANGE    1    4
+    \    ${text}    get text    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[5]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/span
+    \    Run Keyword If    '${text}'=='${status1}'    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[5]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/span
+    \    Run Keyword If    '${text}'=='${status2}'    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[5]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/span
+    \    Run Keyword If    '${text}'=='${status3}'    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[5]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/span
+
+Verify Selected Match Status
+    [Arguments]    ${status1}=${EMPTY}    ${status2}=${EMPTY}    ${status3}=${EMPTY}
+    :FOR    ${i}    IN RANGE    1    4
+    \    ${text}    get text    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[5]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/span
+    \    Run Keyword If    '${text}'=='${status1}'    Checkbox Should Be Selected    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[5]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/input
+    \    Run Keyword If    '${text}'=='${status2}'    Checkbox Should Be Selected    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[5]/div[2]/div/div[2]/div/ul/li[${i}]/label/span/input
+    \    Run Keyword If    '${text}'=='${status3}'    Checkbox Should Be Selected    xpath=//*[@id="root"]/div/div[3]/main/div[1]/div[1]/div[5]/div[2]/div/div[2]/div/ul/li[1]/label/span/input

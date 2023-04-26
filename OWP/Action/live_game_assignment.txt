@@ -1,0 +1,539 @@
+*** Settings ***
+Library           ../Libraries/Selenium2Extend.py
+Library           ExtendedSelenium2Library
+Resource          ../Interface/live_game_assignment.txt
+Library           String
+Library           Collections
+Resource          ../Interface/details_info.txt
+
+*** Keywords ***
+select date
+    [Arguments]    ${selected_date}
+    Press Key    ${txt_date}    \\1
+    Press Key    ${txt_date}    \\127    #Delete
+    Input Text    ${txt_date}    ${selected_date}
+    Press Key    ${txt_date}    \\09    #Tab
+
+check match info in table
+    [Arguments]    ${matchno}    ${KO}    ${other_time}    ${league}    ${home}    ${away}
+    ...    ${status}=${null}    ${no.hdp}=${null}    ${offer}=${null}    ${tv}=${null}    ${channel}=${null}    ${provider}=${null}
+    ...    ${other_provider}=${null}    ${wb}=${null}    ${phone}=${null}    ${mb_spread_mbc}=${null}    ${mb_spread_cn88}=${null}    ${remark}=${null}
+    ...    ${round}=${null}    ${division}=${null}    ${note}=${null}
+    Wait Until Element Is Visible    ${btn_submit}
+    ${match_xpath}    Set Variable    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[@role ='row']
+    #No# column
+    Run Keyword And Continue On Failure    Run Keyword If    '${matchno}'<>'${null}'    Element Should Be Visible    ${match_xpath}//span[@class = 'match-number' and text() ='${matchno}']
+    Run Keyword And Continue On Failure    Run Keyword If    '${status}' <>'${null}'    Element Should Be Visible    ${match_xpath}//span[contains(@class,'${status}')]
+    #KO column
+    Element Should Be Visible    ${match_xpath}//span[@class = 'time-cell' and text()='${KO}']
+    Element Should Be Visible    ${match_xpath}//span[contains(@class, 'other-time') and text()='${other_time}']
+    #Event column
+    Element Should Be Visible    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]
+    Run Keyword And Continue On Failure    Run Keyword If    '${no.hdp}'<>'${null}'    Element Should Be Visible    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]/following-sibling::span[contains(@class, 'hdp') and text() = '${no.hdp}']
+    Run Keyword And Continue On Failure    Run Keyword If    '${offer}'<>'${null}'    Element Should Be Visible    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]/following-sibling::span[contains(@class, 'match-offer') and text() = '${offer}']
+    #TV column
+    Run Keyword And Continue On Failure    Run Keyword If    '${tv}'<>'${null}'    Element Should Be Visible    ${match_xpath}//following-sibling::div/div[@class = 'tv-cell']//span[contains(.,'${tv}')]
+    Run Keyword And Continue On Failure    Run Keyword If    '${channel}'<>'${null}'    Click Element    ${match_xpath}//following-sibling::div/div[@class = 'tv-cell']//button
+    Run Keyword And Continue On Failure    Run Keyword If    '${channel}'<>'${null}'    Element Should Be Visible    //div[@class='popover-body' and contains(.,'${channel}')]
+    #Provider column
+    Run Keyword And Continue On Failure    Run Keyword If    '${provider}'<>'${null}'    Element Should Be Visible    ${match_xpath}//following-sibling::div/div[@class ='provider-cell']/p[@class = 'runner' and text() = '${provider}']
+    Run Keyword And Continue On Failure    Run Keyword If    '${other_provider}'<>'${null}'    Click Element    ${match_xpath}//following-sibling::div/div[@class ='provider-cell']/button
+    Run Keyword And Continue On Failure    Run Keyword If    '${other_provider}'<>'${null}'    Element Should Be Visible    //div[@class='popover-body' and contains(.,'${other_provider}')]
+    Run Keyword And Continue On Failure    Run Keyword If    '${wb}'<>'${null}'    Element Should Be Visible    ${match_xpath}//following-sibling::div/div[@class ='provider-cell']/p[@class = 'wb' and text() = '${wb}']
+    Run Keyword And Continue On Failure    Run Keyword If    '${phone}'<>'${null}'    Element Should Be Visible    ${match_xpath}//following-sibling::div/div[@class='provider-cell']/p[@class = 'phone' and contains(.,'${phone}')]
+    #MB column
+    Run Keyword And Continue On Failure    Run Keyword If    '${mb_spread_mbc}'<>'${null}'    Element Should Be Visible    ${match_xpath}//following-sibling::div/div[@class='maxbet-cell']//span[@class = '' and contains(.,'${mb_spread_mbc}')]
+    Run Keyword And Continue On Failure    Run Keyword If    '${mb_spread_cn88}'<>'${null}'    Element Should Be Visible    ${match_xpath}//following-sibling::div/div[@class='maxbet-cell']//span[@class = 'maxbet-cn88' and contains(.,'${mb_spread_cn88}')]
+    #Remark column
+    Run Keyword And Continue On Failure    Run Keyword If    '${remark}'<>'${null}'    Element Should Be Visible    ${match_xpath}//following-sibling::div/div[@class = 'remark-col']/p[text()='${remark}']
+    Run Keyword And Continue On Failure    Run Keyword If    '${round}'<>'${null}'    Element Should Be Visible    ${match_xpath}//following-sibling::div/div[@class = 'remark-col']//b[text()='Round:']//parent::p[text()='${round}']
+    Run Keyword And Continue On Failure    Run Keyword If    '${division}'<>'${null}'    Element Should Be Visible    ${match_xpath}//following-sibling::div/div[@class = 'remark-col']//b[text()='Division:']//parent::p[text()='${division}']
+    #Note column
+    Run Keyword And Continue On Failure    Run Keyword If    '${note}'<>'${null}'    Click Element    ${match_xpath}//following-sibling::div/div[contains(@class,'note-cell')]/span[@class = 'mdi mdi-comment']
+    Run Keyword And Continue On Failure    Run Keyword If    '${note}'<>'${null}'    Element Should Be Visible    ${match_xpath}//following-sibling::div/div[contains (@class,'note-cell')]//div[contains(@class, 'note-content') and text() = '${note}']
+
+assign trader
+    [Arguments]    ${league}    ${home}    ${away}    ${bettype}    ${trader}
+    [Documentation]    Bettype list:
+    ...
+    ...    - HDP
+    ...    - O/U
+    ...    - 1H HDP
+    ...    - 1H O/U
+    ...    - 1X2
+    ...    - 1H 1X2
+    ...    - 15 mins
+    ...    - 10 mins
+    ...    - FM
+    ...    - AIO
+    ...    - LA
+    ${assign_cell}    Set Variable If    '${bettype}' == 'HDP'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[6]    '${bettype}' == 'O/U'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[7]    '${bettype}' == '1H HDP'
+    ...    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[8]    '${bettype}' == '1H O/U'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[9]    '${bettype}' == '1X2'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[10]    '${bettype}' == '1H 1X2'
+    ...    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[11]    '${bettype}' == '15 mins'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[12]    '${bettype}' == '10 mins'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[13]    '${bettype}' == 'FM'
+    ...    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[14]    '${bettype}' == 'AIO'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[15]    '${bettype}' == 'LA'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[16]
+    Wait Until Element Is Visible    ${assign_cell}
+    Mouse Over    ${assign_cell}
+    ${assign_icon}    Set Variable    ${assign_cell}//button
+    Click Element    ${assign_icon}
+    ${trader_textbox}    Set Variable    ${assign_cell}//input
+    Input Text    ${trader_textbox}    ${trader}    # input trader name
+    Press Key    ${trader_textbox}    \\13    #tab key
+
+assign other trader
+    [Arguments]    ${league}    ${home}    ${away}    ${bettype}    ${other_trader}
+    ${assign_cell}    Set Variable If    '${bettype}' == 'HDP'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[6]    '${bettype}' == 'O/U'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[7]    '${bettype}' == '1H HDP'
+    ...    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[8]    '${bettype}' == '1H O/U'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[9]    '${bettype}' == '1X2'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[10]    '${bettype}' == '1H 1X2'
+    ...    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[11]    '${bettype}' == '15 mins'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[12]    '${bettype}' == '10 mins'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[13]    '${bettype}' == 'FM'
+    ...    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[14]    '${bettype}' == 'AIO'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[15]    '${bettype}' == 'LA'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[16]    //div[@class='editableText']//input
+    ${assign_icon}    Set Variable    ${assign_cell}//button
+    Mouse Over    ${assign_cell}
+    Wait Until Element Is Visible    ${assign_icon}
+    Click Element    ${assign_icon}
+    ${trader_textbox}    Set Variable    ${assign_cell}//div[@class='editableText']//input
+    Input Text    ${trader_textbox}    backup #${other_trader}    # input trader name
+    Press Key    ${trader_textbox}    \\13    #enter key
+    Press Key    ${trader_textbox}    \\13    #enter key
+
+remove trader
+    [Arguments]    ${league}    ${home}    ${away}    ${bettype}    ${trader}
+    ${trader_label}    Set Variable If    '${bettype}' == 'HDP'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[6]/div[contains(@class, 'assignment')]/div[1]//a[text()= '${trader}']    '${bettype}' == 'O/U'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[7]/div[contains(@class, 'assignment')]/div[1]//a[text()= '${trader}']    '${bettype}' == '1H HDP'
+    ...    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[8]/div[contains(@class, 'assignment')]/div[1]//a[text()= '${trader}']    '${bettype}' == '1H O/U'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[9]/div[contains(@class, 'assignment')]/div[1]//a[text()= '${trader}']    '${bettype}' == '1X2'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[10]/div[contains(@class, 'assignment')]/div[1]//a[text()= '${trader}']    '${bettype}' == '1H 1X2'
+    ...    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[11]/div[contains(@class, 'assignment')]/div[1]//a[text()= '${trader}']    '${bettype}' == '15 mins'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[12]/div[contains(@class, 'assignment')]/div[1]//a[text()= '${trader}']    '${bettype}' == '10 mins'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[13]/div[contains(@class, 'assignment')]/div[1]//a[text()= '${trader}']    '${bettype}' == 'FM'
+    ...    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[14]/div[contains(@class, 'assignment')]/div[1]//a[text()= '${trader}']    '${bettype}' == 'AIO'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[15]/div[contains(@class, 'assignment')]/div[1]//a[text()= '${trader}']    '${bettype}' == 'LA'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[16]/div[contains(@class, 'assignment')]/div[1]//a[text()= '${trader}']
+    ${trader_textbox}    Set Variable If    '${bettype}' == 'HDP'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[6]/div[contains(@class, 'assignment')]/div[1]//input    '${bettype}' == 'O/U'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[7]/div[contains(@class, 'assignment')]/div[1]//input    '${bettype}' == '1H HDP'
+    ...    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[8]/div[contains(@class, 'assignment')]/div[1]//input    '${bettype}' == '1H O/U'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[9]/div[contains(@class, 'assignment')]/div[1]//input    '${bettype}' == '1X2'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[10]/div[contains(@class, 'assignment')]/div[1]//input    '${bettype}' == '1H 1X2'
+    ...    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[11]/div[contains(@class, 'assignment')]/div[1]//input    '${bettype}' == '15 mins'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[12]/div[contains(@class, 'assignment')]/div[1]//input    '${bettype}' == '10 mins'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[13]/div[contains(@class, 'assignment')]/div[1]//input    '${bettype}' == 'FM'
+    ...    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[14]/div[contains(@class, 'assignment')]/div[1]//input    '${bettype}' == 'AIO'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[15]/div[contains(@class, 'assignment')]/div[1]//input    '${bettype}' == 'LA'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[16]/div[contains(@class, 'assignment')]/div[1]//input
+    Click Element    ${trader_label}
+    Press Key    ${trader_textbox}    \\1
+    Press Key    ${trader_textbox}    \\127    # Delete
+    Press Key    ${trader_textbox}    \\13    # Enter
+    Comment    Click Element    //button[text()='OK']
+
+remove other trader
+    [Arguments]    ${league}    ${home}    ${away}    ${bettype}    ${other_trader}
+    ${other_trader_label}    Run Keyword If    '${bettype}' == 'Handicap' or '${bettype}' == 'OverUnder' or '${bettype}' == 'OneXTwo'    Set Variable    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[@class='rt-td css-ibpw1q css-p2xvjh']//following-sibling::div/div[contains(@class,'${bettype}') and not (contains(@class,'${bettype}1st'))]//div[@class='editableText']//a[text()='${other_trader}']    ELSE    Set Variable
+    ...    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[@class='rt-td css-ibpw1q css-p2xvjh']//following-sibling::div/div[contains(@class,'${bettype}')]//div[@class='editableText']//a[text()='${other_trader}']
+    ${other_trader_textbox}    Run Keyword If    '${bettype}' == 'Handicap' or '${bettype}' == 'OverUnder' or '${bettype}' == 'OneXTwo'    Set Variable    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[@class='rt-td css-ibpw1q css-p2xvjh']//following-sibling::div/div[contains(@class,'${bettype}') and not(contains(@class,'${bettype}1st'))]//div[@class='editableText']//input    ELSE    Set Variable
+    ...    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[@class='rt-td css-ibpw1q css-p2xvjh']//following-sibling::div/div[contains(@class,'${bettype}')]//div[@class='editableText']//input
+    Click Element    ${other_trader_label}
+    Press Key    ${other_trader_textbox}    \\1    #select all
+    Press Key    ${other_trader_textbox}    \\127    # Delete
+    Press Key    ${other_trader_textbox}    \\13    # Enter
+    Comment    Click Element    //button[text()='OK']
+
+search employee
+    [Arguments]    ${name}
+    Input Text    ${txt_employee}    ${name}
+    Click Element    ${btn_submit}
+
+search match status
+    [Arguments]    ${match_status}
+    Click Element    //div[text()='Match Status']//following-sibling::div/div[@class='dropdown']
+    # clear all check box Match Status
+    ${Is_checkbox_selectedAll_selected}    Run Keyword And Return Status    Checkbox Should Be Selected    //div[text()='Match Status']//following-sibling::div/div[@class='dropdown']/div[2]//span[text() ='Select All']//preceding-sibling::input
+    ${ckbox_select_all}    Set Variable    //div[text()='Match Status']//following-sibling::div/div[@class='dropdown']/div[2]//span[text() ='Select All']
+    Run Keyword If    '${Is_checkbox_selectedAll_selected}' == 'True'    Click Element    ${ckbox_select_all}    ELSE    Double Click Element    ${ckbox_select_all}
+    # Select match status
+    Click Element    //div[text()='Match Status']//following-sibling::div/div[@class='dropdown']/div[2]//span[text() ='${match_status}']
+    Click Element    ${btn_submit}
+
+check trader exists on bettype of match
+    [Arguments]    ${league}    ${home}    ${away}    ${bettype}    ${trader}
+    ${trader_label}    Set Variable If    '${bettype}' == 'HDP'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[6]/div[contains(@class, 'assignment')]/div[1]//a[text()= '${trader}']    '${bettype}' == 'O/U'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[7]/div[contains(@class, 'assignment')]/div[1]//a[text()= '${trader}']    '${bettype}' == '1H HDP'
+    ...    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[8]/div[contains(@class, 'assignment')]/div[1]//a[text()= '${trader}']    '${bettype}' == '1H O/U'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[9]/div[contains(@class, 'assignment')]/div[1]//a[text()= '${trader}']    '${bettype}' == '1X2'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[10]/div[contains(@class, 'assignment')]/div[1]//a[text()= '${trader}']    '${bettype}' == '1H 1X2'
+    ...    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[11]/div[contains(@class, 'assignment')]/div[1]//a[text()= '${trader}']    '${bettype}' == '15 mins'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[12]/div[contains(@class, 'assignment')]/div[1]//a[text()= '${trader}']    '${bettype}' == '10 mins'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[13]/div[contains(@class, 'assignment')]/div[1]//a[text()= '${trader}']    '${bettype}' == 'FM'
+    ...    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[14]/div[contains(@class, 'assignment')]/div[1]//a[text()= '${trader}']    '${bettype}' == 'AIO'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[15]/div[contains(@class, 'assignment')]/div[1]//a[text()= '${trader}']    '${bettype}' == 'LA'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[16]/div[contains(@class, 'assignment')]/div[1]//a[text()= '${trader}']
+    Element Should Be Visible    ${trader_label}
+
+check other trader exists on bettype of match
+    [Arguments]    ${league}    ${home}    ${away}    ${bettype}    ${other_trader}
+    ${other_trader_label}    Set Variable If    '${bettype}' == 'HDP'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[6]/div[contains(@class, 'assignment')]/div[2]//a[text()= '${other_trader}']    '${bettype}' == 'O/U'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[7]/div[contains(@class, 'assignment')]/div[2]//a[text()= '${other_trader}']    '${bettype}' == '1H HDP'
+    ...    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[8]/div[contains(@class, 'assignment')]/div[2]//a[text()= '${other_trader}']    '${bettype}' == '1H O/U'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[9]/div[contains(@class, 'assignment')]/div[2]//a[text()= '${other_trader}']    '${bettype}' == '1X2'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[10]/div[contains(@class, 'assignment')]/div[2]//a[text()= '${other_trader}']    '${bettype}' == '1H 1X2'
+    ...    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[11]/div[contains(@class, 'assignment')]/div[2]//a[text()= '${other_trader}']    '${bettype}' == '15 mins'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[12]/div[contains(@class, 'assignment')]/div[2]//a[text()= '${other_trader}']    '${bettype}' == '10 mins'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[13]/div[contains(@class, 'assignment')]/div[2]//a[text()= '${other_trader}']    '${bettype}' == 'FM'
+    ...    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[14]/div[contains(@class, 'assignment')]/div[2]//a[text()= '${other_trader}']    '${bettype}' == 'AIO'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[15]/div[contains(@class, 'assignment')]/div[2]//a[text()= '${other_trader}']    '${bettype}' == 'LA'    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]//ancestor::div[contains(@class,'cellGroupWrapper')]/following-sibling::div[1]//div[16]/div[contains(@class, 'assignment')]/div[2]//a[text()= '${other_trader}']
+    Element Should Be Visible    ${other_trader_label}
+
+check trader exists on each match
+    [Arguments]    ${trader}
+    ${count}    Get Text    //div[@class='total']
+    ${real_count}    Get Substring    ${count}    14    # the length of "Total records: "
+    log    ${real_count}
+    : FOR    ${i}    IN RANGE    1    ${real_count}
+    \    Element Should Be Visible    //div[contains(@class, 'fixedDataTableLayout_rowsContainer')]/div[3]/div[${i}]//a[text()='${trader}']
+
+check status on each match
+    [Arguments]    ${match_status}
+    ${count}    Get Text    //div[@class='total']
+    ${real_count}    Get Substring    ${count}    14    # the length of "Total records: "
+    log    ${real_count}
+    : FOR    ${i}    IN RANGE    1    ${real_count}
+    \    Element Should Be Visible    //div[@class="rt-tbody"]/div[@class="rt-tr-group"][${i}]//span[contains(@class, '${match_status}')]
+    \    \    //div[contains(@class, 'fixedDataTableLayout_rowsContainer')]/div[3]/div[${i}]//span[contains(@class, '${match_status}')]
+
+show/hide bettype column
+    [Arguments]    ${type_of_action}    ${bettype}
+    [Documentation]    This action is used for user to show/ hide bettype column.
+    ...    - type_of_action: "show" or "hide" value.
+    ...    - bettype: the name of bettype you want to action
+    ${listbettype}    Run Keyword And Return Status    Element Should Be Visible    //div[@class='dropdown-content']
+    Run Keyword If    '${listbettype}' == 'False'    Click Element    ${ddl_showhidecolumn}    # //div[@class = 'filter-control btn-block btn-block--right']//span[text()='${bettype}']//ancestor::label[@aria-selected='false']
+    ${get_status}    Run Keyword And Return Status    Checkbox Should Be Selected    //div[@class = 'filter-control btn-block btn-block--right']//span[text()='${bettype}']//preceding-sibling::input
+    ${ckbox}    Set Variable    //div[@class = 'filter-control btn-block btn-block--right']//span[text()='${bettype}' \ and contains(@style, 'display')]
+    Run Keyword If    '${type_of_action}' == 'hide'    Run Keyword If    '${get_status}' == 'True'    Click Element    ${ckbox}
+    Run Keyword If    '${type_of_action}' == 'show'    Run Keyword If    '${get_status}' == 'False'    Click Element    ${ckbox}
+
+check viewing bettype column
+    [Arguments]    ${bettype}    ${yes_no_state}
+    Run Keyword If    '${yes_no_state}' == 'yes'    Element Should Be Visible    //div[@class='title-header']/span[text() = '${bettype}']
+    Run Keyword If    '${yes_no_state}' == 'no'    Element Should Not Be Visible    //div[@class='title-header']/span[text() = '${bettype}']
+
+filter on column
+    [Arguments]    ${coulmn_name}    ${search_text}
+    Wait Until Element Is Visible    //span[text()='${coulmn_name}']//following-sibling::div
+    Click Element    //span[text()='${coulmn_name}']//following-sibling::div
+    Input Text    //span[text()='${coulmn_name}']//following-sibling::div//input    ${search_text}
+    Click Element    //span[text()='${coulmn_name}']//following-sibling::div//button
+
+check trader exists in column
+    [Arguments]    ${bettype}    ${trader}
+    [Documentation]    Handicap
+    ...    Handicap1st
+    ...    OveUnder
+    ...    OverUnder1st
+    ...    OneXTwo
+    ...    OneXTwo1st
+    ${bettype}    Run Keyword If    '${bettype}' == 'Handicap'    Set Variable    ${bettype}3    ELSE    Run Keyword If
+    ...    '${bettype}' == 'OverUnder'    Set Variable    ${bettype}3    ELSE    Run Keyword If    '${bettype}' == 'OneXTwo1st'
+    ...    Set Variable    ${bettype}3    ELSE    Set Variable    ${bettype}
+    ${count}    Get Text    //span[@class='total-records']
+    ${real_count}    Get Substring    ${count}    14    # the length of "Total records: "
+    log    ${real_count}
+    : FOR    ${i}    IN RANGE    1    ${real_count}+1
+    \    Element Should Be Visible    //div[@class="rt-tbody"]/div[@class='rt-tr-group'][${i}]//div[contains(@class, '${bettype}')]//a[text()='${trader}']
+
+check match_no exists in column
+    [Arguments]    ${match_no}
+    ${count}    Get Text    //span[@class='total-records']
+    ${real_count}    Get Substring    ${count}    14    # the length of "Total records: "
+    log    ${real_count}
+    # Run Keyword If    ${real_count} = 0
+    : FOR    ${i}    IN RANGE    1    ${real_count}+1
+    \    Element Should Be Visible    //div[@class="rt-tbody"]/div[@class='rt-tr-group'][${i}]//div[contains(@class, 'match-no')]/span[contains(.,'${match_no}')]
+
+check match status exists in column
+    [Arguments]    ${status}
+    ${status}    Evaluate    '${status}'.lower()
+    ${count}    Get Text    //span[@class='total-records']
+    ${real_count}    Get Substring    ${count}    14    # the length of "Total records: "
+    log    ${real_count}
+    : FOR    ${i}    IN RANGE    1    ${real_count}+1
+    \    Element Should Be Visible    //div[@class="rt-tbody"]/div[@class='rt-tr-group'][${i}]//div[contains(@class, 'match-no')]/span[contains(@class,'${status}')]
+
+check KO Time exists in column
+    [Arguments]    ${KO_time}
+    ${KO_time}    Evaluate    '${KO_time}'.upper()
+    ${count}    Get Text    //span[@class='total-records']
+    ${real_count}    Get Substring    ${count}    14    # the length of "Total records: "
+    log    ${real_count}
+    : FOR    ${i}    IN RANGE    1    ${real_count}+1
+    \    Element Should Be Visible    //div[@class="rt-tbody"]/div[@class='rt-tr-group'][${i}]//div[contains(@class, 'kickoff-cell')]//span[@class = 'time-cell' and contains(.,'${KO_time}')]
+
+check other time exists in column
+    [Arguments]    ${other_time}
+    ${other_time}    Evaluate    '${other_time}'.upper()
+    ${count}    Get Text    //span[@class='total-records']
+    ${real_count}    Get Substring    ${count}    14    # the length of "Total records: "
+    log    ${real_count}
+    : FOR    ${i}    IN RANGE    1    ${real_count}+1
+    \    Element Should Be Visible    //div[@class="rt-tbody"]/div[@class='rt-tr-group'][${i}]//div[contains(@class, 'kickoff-cell')]//span[contains(@class, 'other-time') and contains(.,'${other_time}')]
+
+check league exists in column
+    [Arguments]    ${league}
+    ${count}    Get Text    //span[@class='total-records']
+    ${real_count}    Get Substring    ${count}    14    # the length of "Total records: "
+    log    ${real_count}
+    : FOR    ${i}    IN RANGE    1    ${real_count}+1
+    \    Element Should Be Visible    //div[@class="rt-tbody"]/div[@class='rt-tr-group'][${i}]//p[@class = 'league-name' and contains(.,'${league}')]
+
+check team name exists in column
+    [Arguments]    ${team}
+    ${count}    Get Text    //span[@class='total-records']
+    ${real_count}    Get Substring    ${count}    14    # the length of "Total records: "
+    log    ${real_count}
+    : FOR    ${i}    IN RANGE    1    ${real_count}+1
+    \    Element Should Be Visible    //div[@class="rt-tbody"]/div[@class='rt-tr-group'][${i}]//p[@class = 'match-name' and contains(.,'${team}')]
+
+check number of HDP exist in column
+    [Arguments]    ${noHDP}
+    ${count}    Get Text    //span[@class='total-records']
+    ${real_count}    Get Substring    ${count}    14    # the length of "Total records: "
+    log    ${real_count}
+    : FOR    ${i}    IN RANGE    1    ${real_count}+1
+    \    Element Should Be Visible    //div[@class="rt-tbody"]/div[@class='rt-tr-group'][${i}]//p[@class = 'match-name']//following-sibling::span[contains(@class,'hdp') and contains( .,'${noHDP}')]
+
+check match_offer exists in column
+    [Arguments]    ${match_offer}
+    ${count}    Get Text    //span[@class='total-records']
+    ${real_count}    Get Substring    ${count}    14    # the length of "Total records: "
+    log    ${real_count}
+    : FOR    ${i}    IN RANGE    1    ${real_count}+1
+    \    Element Should Be Visible    //div[@class="rt-tbody"]/div[@class='rt-tr-group'][${i}]//p[@class = 'match-name']//following-sibling::span[contains(@class,'match-offer') and contains(.,'${match_offer}')]
+
+check TV exists in column
+    [Arguments]    ${tv}
+    ${count}    Get Text    //span[@class='total-records']
+    ${real_count}    Get Substring    ${count}    14    # the length of "Total records: "
+    log    ${real_count}
+    : FOR    ${i}    IN RANGE    1    ${real_count}+1
+    \    Element Should Be Visible    //div[@class="rt-tbody"]/div[@class='rt-tr-group'][${i}]//div[@class = 'tv-cell']//span[text()='${tv}']
+
+check channel exists in column
+    [Arguments]    ${channel}
+    ${count}    Get Text    //span[@class='total-records']
+    ${real_count}    Get Substring    ${count}    14    # the length of "Total records: "
+    log    ${real_count}
+    : FOR    ${i}    IN RANGE    1    ${real_count}+1
+    \    Click Element    //div[@class="rt-tbody"]/div[@class='rt-tr-group'][${i}]//div[@class = 'tv-cell']/button[contains(@class, 'channel')]
+    \    Element Should Be Visible    //div[@class = 'popover-body' and contains(.,'${channel}')]
+
+check provider exists in column
+    [Arguments]    ${provider}
+    ${count}    Get Text    //span[@class='total-records']
+    ${real_count}    Get Substring    ${count}    14    # the length of "Total records: "
+    log    ${real_count}
+    : FOR    ${i}    IN RANGE    1    ${real_count}+1
+    \    Element Should Be Visible    //div[@class="rt-tbody"]/div[@class='rt-tr-group'][${i}]//div[@class = 'provider-cell']/p[@class='runner' and contains(.,'${provider}')]
+
+check other_provider exists in column
+    [Arguments]    ${other_provider}
+    ${count}    Get Text    //span[@class='total-records']
+    ${real_count}    Get Substring    ${count}    14    # the length of "Total records: "
+    log    ${real_count}
+    : FOR    ${i}    IN RANGE    1    ${real_count}+1
+    \    Click Element    //div[@class="rt-tbody"]/div[@class='rt-tr-group'][${i}]//div[@class = 'provider-cell']/button[contains(.,'Other Provider')]
+    \    Element Should Be Visible    //div[@class = 'popover-body' and contains(.,'${other_provider}')]
+
+check watchbet exists in column
+    [Arguments]    ${wb}
+    ${count}    Get Text    //span[@class='total-records']
+    ${real_count}    Get Substring    ${count}    14    # the length of "Total records: "
+    log    ${real_count}
+    : FOR    ${i}    IN RANGE    1    ${real_count}+1
+    \    Element Should Be Visible    //div[@class="rt-tbody"]/div[@class='rt-tr-group'][${i}]//div[@class = 'provider-cell']/p[@class='wb' and contains(.,'${wb}')]
+
+check phone exists in column
+    [Arguments]    ${phone}
+    ${count}    Get Text    //span[@class='total-records']
+    ${real_count}    Get Substring    ${count}    14    # the length of "Total records: "
+    log    ${real_count}
+    : FOR    ${i}    IN RANGE    1    ${real_count}+1
+    \    Element Should Be Visible    //div[@class="rt-tbody"]/div[@class='rt-tr-group'][${i}]//div[@class = 'provider-cell']/p[@class='phone' and contains(.,'${phone}')]
+
+check maxbet MBC exists in column
+    [Arguments]    ${mb}
+    ${mb}    Evaluate    '${mb}'.upper()
+    ${count}    Get Text    //span[@class='total-records']
+    ${real_count}    Get Substring    ${count}    14    # the length of "Total records: "
+    log    ${real_count}
+    : FOR    ${i}    IN RANGE    1    ${real_count}+1
+    \    Element Should Be Visible    //div[@class="rt-tbody"]/div[@class='rt-tr-group'][${i}]//div[@class = 'maxbet-cell']//span[@data-tip = 'Maxbet/Spread of MBC' and contains(.,'${mb}')]
+
+check maxbet CN88 exists in column
+    [Arguments]    ${mb}
+    ${mb}    Evaluate    '${mb}'.upper()
+    ${count}    Get Text    //span[@class='total-records']
+    ${real_count}    Get Substring    ${count}    14    # the length of "Total records: "
+    log    ${real_count}
+    : FOR    ${i}    IN RANGE    1    ${real_count}+1
+    \    Element Should Be Visible    //div[@class="rt-tbody"]/div[@class='rt-tr-group'][${i}]//div[@class = 'maxbet-cell']//span[@data-tip = 'Maxbet/Spread of CN88' and contains(.,'${mb}')]
+
+check remark exists in column
+    [Arguments]    ${remark}
+    ${count}    Get Text    //span[@class='total-records']
+    ${real_count}    Get Substring    ${count}    14    # the length of "Total records: "
+    log    ${real_count}
+    : FOR    ${i}    IN RANGE    1    ${real_count}+1
+    \    Element Should Be Visible    //div[@class="rt-tbody"]/div[@class='rt-tr-group'][${i}]//div[@class = 'remark-col']/p[1][contains(.,'${remark}')]
+
+check round exists in column
+    [Arguments]    ${round}
+    ${count}    Get Text    //span[@class='total-records']
+    ${real_count}    Get Substring    ${count}    14    # the length of "Total records: "
+    log    ${real_count}
+    : FOR    ${i}    IN RANGE    1    ${real_count}+1
+    \    Element Should Be Visible    //div[@class="rt-tbody"]/div[@class='rt-tr-group'][${i}]//div[@class = 'remark-col']//b[text()='Round:']//parent::p[contains(.,'${round}')]
+
+check division exists in column
+    [Arguments]    ${division}
+    ${count}    Get Text    //span[@class='total-records']
+    ${real_count}    Get Substring    ${count}    14    # the length of "Total records: "
+    log    ${real_count}
+    : FOR    ${i}    IN RANGE    1    ${real_count}+1
+    \    Element Should Be Visible    //div[@class="rt-tbody"]/div[@class='rt-tr-group'][${i}]//div[@class = 'remark-col']//b[text()='Division:']//parent::p[contains(.,'${division}')]
+
+check note exist in column
+    [Arguments]    ${note}
+    ${count}    Get Text    //span[@class='total-records']
+    ${real_count}    Get Substring    ${count}    14    # the length of "Total records: "
+    log    ${real_count}
+    : FOR    ${i}    IN RANGE    1    ${real_count}+1
+    \    Click Element    //div[@class="rt-tbody"]/div[@class='rt-tr-group'][${i}]//div[contains(@class, 'note-cell')]/span
+    \    Element Should Be Visible    //div[@class="rt-tbody"]/div[@class='rt-tr-group'][${i}]//div[contains(@class, 'note-cell')]/div[contains(.,'${note}')]
+
+add new event
+    [Arguments]    ${match_no}    ${KO}    ${other_KO}    ${league}    ${home}    ${away}
+    # click on "Add Event" button
+    Click Element    ${btn_add_event}
+    Wait Until Element Is Visible    ${txt_match_no}
+    # input info
+    Input Text    ${txt_match_no}    ${match_no}
+    Click Element    ${txt_KO}
+    Input Text    //div[contains(@class, 'modal-content')]//div[text() = 'KO Time']/following-sibling::div//div[@class='ant-time-picker-panel-input-wrap']//input    ${KO}
+    Click Element    ${txt_otherKO}
+    Input Text    //div[contains(@class, 'modal-content')]//div[text() = 'Other Time']/following-sibling::div//div[@class='ant-time-picker-panel-input-wrap']//input    ${other_KO}
+    Input Text    ${txt_league}    ${league}
+    Input Text    ${txt_home}    ${home}
+    Input Text    ${txt_away}    ${away}
+    # submit add new match
+    Click Element    ${btn_add}
+    Comment    #click OK on notification
+    Wait Until Element Is Visible    xpath = //button[text()='OK']    5s
+    Click Element    xpath = //button[text()='OK']
+
+delete event
+    [Arguments]    ${league}    ${home}    ${away}    ${confirm}=Yes
+    # get icon navigate to Details Info
+    ${icon_open_detaisInfo}    Set Variable    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]/parent::div/a[contains(@class, 'link-livedetail')]
+    Wait Until Element Is Visible    ${btn_submit}
+    Mouse Over    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]
+    Click Element    ${icon_open_detaisInfo}
+    Comment    ${popup}    Select Window    NEW    # Select latest opened window
+    Comment    Select Window    ${popup}
+    Select Frame    xpath=//*[*[*[normalize-space(text())='Detail Information']]]//iframe
+    Wait Until Page Contains Element    ${btn_edit_matchInfo}
+    Click Element    ${btn_edit_matchInfo}
+    Click Element    ${btn_unselected}
+    Click Element    ${btn_save_matchInfo}
+    Run Keyword If    '${confirm}'=='Yes'    Run Keywords    Click Element    ${btn_ok}    AND    Click Element
+    ...    ${btn_ok}    ELSE    Click Element    ${btn_cancel}
+
+add special event
+    [Arguments]    ${special_event_name}    ${special_event_no}    ${other_KO}    ${league}    ${home}    ${away}
+    ${icon_add_special}    Set Variable    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]/parent::div/a[contains(@class, 'add-specialEvent')]
+    Mouse Over    //p[@class='league-name' and text()='${league}']/following-sibling::p[@class='match-name' and contains(., '${home} -vs- ${away}')]
+    Wait Until Element Is Visible    ${icon_add_special}
+    Click Element    ${icon_add_special}
+    Input Text    ${txt_special_event}    ${special_event_name}
+    Press Key    ${txt_special_event}    \\13    # enter
+    Input Text    ${txt_match_no}    ${special_event_no}
+    Click Element    ${txt_otherKO}
+    Input Text    //div[contains(@class, 'modal-content')]//div[text() = 'Other Time']/following-sibling::div//div[@class='ant-time-picker-panel-input-wrap']//input    ${other_KO}
+    Click Element    ${btn_add}
+    #close notification
+    Click Element    ${btn_ok}
+
+check message exists
+    [Arguments]    ${message}
+    ${message_element}    Set Variable    //div[text()='${message}']
+    Element Should Be Visible    ${message_element}
+
+add new event_new
+    [Arguments]    ${KO}    ${league}    ${home}    ${away}    ${status}=${null}    ${match_no}=${null}
+    ...    ${other_KO}=${null}    ${remark}=${null}    ${round}=${null}    ${division}=${null}    ${web1}=${null}    ${web2}=${null}
+    ...    ${web3}=${null}    ${web4}=${null}    ${tv}=${null}    ${channel}=${null}    ${wb}=${null}    ${provider}=${null}
+    ...    ${other_provider}=${null}    ${agent}=${null}    ${phone}=${null}    ${match_offer}=${null}    ${no_hdp}=${null}    ${goal_odds}=${null}
+    ...    ${home_odds}=${null}    ${away_odds}=${null}    ${mb_mbc}=${null}    ${spread_mbc}=${null}    ${mb_cn88}=${null}    ${spread_cn88}=${null}
+    # click on "Add Event" button
+    Click Element    ${btn_add_event}
+    Wait Until Element Is Visible    ${txt_status}
+    # input match status
+    Run Keyword If    '${status}'<>'${null}'    Run Keywords    Input Text    ${txt_status}    ${status}    AND
+    ...    Press Key    ${txt_status}    \\13
+    # input match no
+    Run Keyword If    '${match_no}'<>'${null}'    Input Text    ${txt_match_no}    ${match_no}
+    # input KO
+    Click Element    ${txt_KO}
+    Input Text    //div[contains(@class, 'modal-content')]//div[text() = 'KO Time']/following-sibling::div//div[@class='ant-time-picker-panel-input-wrap']//input    ${KO}
+    Click Element    ${txt_league}
+    # input other KO
+    Run Keyword If    '${other_KO}'<>'${null}'    Run Keywords    Click Element    ${txt_otherKO}    AND    Input Text
+    ...    //div[contains(@class, 'modal-content')]//div[text() = 'Other Time']/following-sibling::div//div[@class='ant-time-picker-panel-input-wrap']//input    ${other_KO}    AND    Click Element    ${txt_league}
+    # input league, home, away
+    Input Text    ${txt_league}    ${league}
+    Input Text    ${txt_home}    ${home}
+    Input Text    ${txt_away}    ${away}
+    # input remark
+    Run Keyword If    '${remark}'<>'${null}'    Input Text    ${txt_remark}    ${remark}
+    # input round
+    Run Keyword If    '${round}'<>'${null}'    Input Text    ${txt_round}    ${round}
+    # input division
+    Run Keyword If    '${division}'<>'${null}'    Input Text    ${txt_division}    ${division}
+    # input web1
+    Run Keyword If    '${web1}'<>'${null}'    Input Text    ${txt_web1}    ${web1}
+    # input web2
+    Run Keyword If    '${web2}'<>'${null}'    Input Text    ${txt_web2}    ${web2}
+    # input web3
+    Run Keyword If    '${web3}'<>'${null}'    Input Text    ${txt_web3}    ${web3}
+    # input web4
+    Run Keyword If    '${web4}'<>'${null}'    Input Text    ${txt_web4}    ${web4}
+    # input TV
+    Run Keyword If    '${tv}'<>'${null}'    Run Keywords    Input Text    ${txt_tv}    ${tv}    AND
+    ...    Press Key    ${tv}    \\13
+    # input channel
+    Run Keyword If    '${channel}'<>'${null}'    Input Text    ${txt_channel}    ${channel}
+    # input watch and bet
+    Run Keyword If    '${wb}'<>'${null}'    Input Text    ${txt_wb}    ${wb}
+    # input provider
+    Run Keyword If    '${provider}'<>'${null}'    Input Text    ${txt_provider}    ${provider}
+    # input other provider
+    Run Keyword If    '${other_provider}'<>'${null}'    Input Text    ${txt_other_provider}    ${other_provider}
+    # input agent
+    Run Keyword If    '${agent}'<>'${null}'    Run Keywords    Input Text    ${txt_agent}    ${agent}    AND
+    ...    Press Key    ${agent}    \\13
+    # input other phone
+    Run Keyword If    '${phone}'<>'${null}'    Input Text    ${txt_phone}    ${phone}
+    # input match offer
+    Run Keyword If    '${match_offer}'<>'${null}'    Run Keywords    Input Text    ${txt_match_offer}    ${match_offer}    AND
+    ...    Press Key    ${txt_match_offer}    \\13
+    # input No. HDP
+    Run Keyword If    '${no_hdp}'<>'${null}'    Run Keywords    Input Text    ${txt_no_hdp}    ${no_hdp}    AND
+    ...    Press Key    ${txt_no_hdp}    \\13
+    #add odds
+    Run Keyword If    '${goal_odds}'<>'${null}'    add odds    odds=${goal_odds}    home=${home_odds}    away=${away_odds}
+    # submit add new match
+    Click Element    ${btn_add}
+
+add odds
+    [Arguments]    ${odds}=${null}    ${home}=${null}    ${away}=${null}    ${draw}=${null}
+    #Recommend Odds
+    ${odds_bettype_element}    Set Variable    //div[contains(@class, 'modal-content')]//div[contains(@class,'tbl-recommendodds')]//tr[1]/td[1]//div[contains(@class, 'select__value-container')]
+    ${goal_element}    Set Variable    //div[contains(@class, 'modal-content')]//div[contains(@class,'tbl-recommendodds')]//tr[1]//td[2]//div[contains(@class, 'select__value-container')]
+    ${odds_element}    Set Variable    //div[contains(@class, 'modal-content')]//div[contains(@class,'tbl-recommendodds')]//tr[1]/td[2]//input[@type = 'text']
+    ${home_element}    Set Variable    //div[contains(@class, 'modal-content')]//div[contains(@class,'tbl-recommendodds')]//tr[1]//td[3]//input
+    ${away_element}    Set Variable    //div[contains(@class, 'modal-content')]//div[contains(@class,'tbl-recommendodds')]//tr[1]//td[4]//input
+    ${draw_element}    Set Variable    //div[contains(@class, 'modal-content')]//div[contains(@class,'tbl-recommendodds')]//tr[1]//td[5]//input
+    ${add_odds_btn}    Set Variable    //div[contains(@class, 'header') and text() = 'Recommend Odds']/button
+    Click Button    ${add_odds_btn}
+    Run Keyword If    '${odds}'<>'${null}'    Input Text    ${odds_element}    ${odds}
+    Run Keyword If    '${home}'<>'${null}'    Input Text    ${home_element}    ${home}
+    Run Keyword If    '${away}'<>'${null}'    Input Text    ${away_element}    ${away}
+    Run Keyword If    '${draw}'<>'${null}'    Input Text    ${draw_element}    ${draw}
+
+add note
+    [Arguments]    ${league}    ${home}    ${away}    ${note}
+    Click Element    ${btn_add_odds}
+
+add maxbet
+    [Arguments]    ${bettype}    ${mb_mbc}=${null}    ${spread_mbc}=${null}    ${mb_cn88}=${null}    ${spread_cn88}=${null}
+    # maxbet
+    ${mb_bettype_element}    Set Variable    //div[contains(@class, 'modal-content')]//div[contains(@class,'tbl-maxbet')]//tr[1]//div[contains(@class, 'select__value-container')]//input
+    ${mb_mbc}    Set Variable    //div[contains(@class, 'modal-content')]//div[contains(@class,'tbl-maxbet')]//tr[1]/td[2]/div[1]/input
+    ${spread_mbc}    Set Variable    //div[contains(@class, 'modal-content')]//div[contains(@class,'tbl-maxbet')]//tr[1]/td[2]/div[2]/input
+    ${mb_cn88}    Set Variable    //div[contains(@class, 'modal-content')]//div[contains(@class,'tbl-maxbet')]//tr[1]/td[3]/div[1]/input
+    ${spread_cn88}    Set Variable    //div[contains(@class, 'modal-content')]//div[contains(@class,'tbl-maxbet')]//tr[1]/td[3]/div[2]/input
+    ${add_mb_btn}    Set Variable    //div[contains(@class, 'table tbl-maxbet')]/button
+    Input Text    ${mb_mbc}    20
+    Input Text    ${spread_mbc}    0.2
+    Input Text    ${mb_cn88}    10
+    Input Text    ${spread_cn88}    0.1

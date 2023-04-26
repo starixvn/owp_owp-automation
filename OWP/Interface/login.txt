@@ -1,0 +1,5 @@
+*** Variables ***
+${in_login_user}    xpath=//*[@id='username']
+${in_login_pass}    xpath=//*[@id='password']
+${in_login_btnLogin}    xpath=//*[@id='submit']
+${icon_narrow}    xpath=//*[@id="js-toggleMenubar"]/i

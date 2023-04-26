@@ -1,0 +1,352 @@
+*** Settings ***
+Suite Setup
+Suite Teardown    Close All Browsers
+Library           ExtendedSelenium2Library
+Resource          ../Action/common.txt
+Library           ../Libraries/Selenium2Extend.py
+Resource          ../Action/live_game_assignment.txt
+Resource          ../Interface/login.txt
+Library           String
+Resource          ../Interface/details_info.txt
+
+*** Test Cases ***
+Verify match status value changes when changing date ( in the past, today)
+    [Documentation]    Ensure that the match status is updated when user change the Date.
+    ...
+    ...    Expect:
+    ...    - When the Date is in the past, the match status should be 'All items are selected'.
+    ...    - When the Date is Today / in the future, the match status should be 'In-Play, Live'
+    [Setup]    init    sa
+    ${date_in_the_past }    Set Variable    May 27, 2019
+    ${match_status_in_the_past}    Set Variable    //div[text()='Match Status']/following-sibling::div//span[text()='All items are selected']    # 'All items are selected'
+    ${match_status_today}    Set Variable    //div[text()='Match Status']/following-sibling::div//span[text()='In-play, Live']    # 'In-play, Live'
+    Navigate To Menu    Live Game Assignment
+    # select date in the past
+    select date    ${date_in_the_past }
+    Element Should Be Visible    ${match_status_in_the_past}
+    # select today
+    ${m}    ${d}    ${y}    Get Time    month, day, year
+    ${today}    Set Variable    ${m} ${d}, ${y}
+    select date    ${today}
+    Element Should Be Visible    ${match_status_today}
+    [Teardown]    Close Browser
+
+Verify all match info displays on table
+    [Documentation]    Ensure that all match info show correctly
+    [Setup]    init    sa
+    ${m_date}    Set Variable    Aug 14, 2019
+    Navigate To Menu    Live Game Assignment
+    select date    ${m_date}
+    Click Element    ${btn_submit}
+    check match info in table    completed    1    08:00 PM    08:10 PM    LeagueTest-LT    LT0A
+    ...    LT0B    1HDP    Fast Market    BET365    Channel1    provider1
+    ...    Providerlist    WatchBet on parent long    111111111    10K(1% - 1%)    10K(1% - 1%)    this is remark 1
+    ...    Round 1    Division 1    My note 1
+    [Teardown]    Close Browser
+
+Verify user can search employee and status
+    [Documentation]    Ensure that the search employee/status work correctly.
+    [Setup]    init    sa
+    ${trader}    Set Variable    CLGBAY
+    ${status}    Set Variable    Cancel
+    ${date}    Set Variable    Nov 17, 2020
+    Navigate To Menu    Live Game Assignment
+    select date    ${date}
+    #------ Search Employee
+    Focus    ${txt_employee}
+    Input Text    ${txt_employee}    ${trader}
+    Click Element    ${btn_submit}
+    # Verify employee on each row
+    check trader exists on each match    ${trader}
+    #---- Search Match Status
+    search match status    ${status}
+    # Verify match status on each match
+    ${m_status}    Evaluate    '${status}'.lower()
+    check status on each match    ${m_status}
+    [Teardown]    Close Browser
+
+Verify user can show/ hide bettype columns
+    [Documentation]    Ensure that the Show/Hide bettype funtion work correctly.
+    [Setup]    init    sa
+    Navigate To Menu    Live Game Assignment
+    #hide each bettype
+    show/hide bettype column    hide    TV/IPTV
+    show/hide bettype column    hide    Provider
+    show/hide bettype column    hide    HDP
+    show/hide bettype column    hide    O/U
+    show/hide bettype column    hide    HDP
+    show/hide bettype column    hide    O/U
+    show/hide bettype column    hide    1H HDP
+    show/hide bettype column    hide    1H O/U
+    show/hide bettype column    hide    1X2
+    show/hide bettype column    hide    1H 1X2
+    show/hide bettype column    hide    15 mins
+    show/hide bettype column    hide    10 mins
+    show/hide bettype column    hide    FM
+    show/hide bettype column    hide    AIO
+    #check bettype columns do not display
+    Run Keyword And Continue On Failure    check viewing bettype column    HDP    no
+    Run Keyword And Continue On Failure    check viewing bettype column    O/U    no
+    Run Keyword And Continue On Failure    check viewing bettype column    1H HDP    no
+    Run Keyword And Continue On Failure    check viewing bettype column    1H O/U    no
+    Run Keyword And Continue On Failure    check viewing bettype column    1X2    no
+    Run Keyword And Continue On Failure    check viewing bettype column    1H 1X2    no
+    Run Keyword And Continue On Failure    check viewing bettype column    15 mins    no
+    Run Keyword And Continue On Failure    check viewing bettype column    10 mins    no
+    Run Keyword And Continue On Failure    check viewing bettype column    FM    no
+    Run Keyword And Continue On Failure    check viewing bettype column    AIO    no
+    #Show all bettype columns
+    show/hide bettype column    show    1X2
+    show/hide bettype column    show    1H 1X2
+    show/hide bettype column    show    15 mins
+    show/hide bettype column    show    10 mins
+    show/hide bettype column    show    FM
+    show/hide bettype column    show    AIO
+    Run Keyword And Continue On Failure    check viewing bettype column    1X2    yes
+    Run Keyword And Continue On Failure    check viewing bettype column    1H 1X2    yes
+    Run Keyword And Continue On Failure    check viewing bettype column    15 mins    yes
+    Run Keyword And Continue On Failure    check viewing bettype column    10 mins    yes
+    Run Keyword And Continue On Failure    check viewing bettype column    FM    yes
+    Run Keyword And Continue On Failure    check viewing bettype column    AIO    yes
+    show/hide bettype column    show    HDP
+    show/hide bettype column    show    O/U
+    show/hide bettype column    show    1H HDP
+    show/hide bettype column    show    1H O/U
+    Run Keyword And Continue On Failure    check viewing bettype column    HDP    yes
+    Run Keyword And Continue On Failure    check viewing bettype column    O/U    yes
+    Run Keyword And Continue On Failure    check viewing bettype column    1H HDP    yes
+    Run Keyword And Continue On Failure    check viewing bettype column    1H O/U    yes
+    [Teardown]    Close Browser
+
+Verify user can filter each columns
+    [Documentation]    Ensure that the filter on each columns of Live Game Assignmnet table work correctly.
+    [Setup]    Init    sa
+    ${m_date}    Set Variable    Aug 14, 2019
+    Navigate To Menu    Live Game Assignment
+    select date    ${m_date}
+    Click Element    ${btn_submit}
+    #filter match information
+    filter on column    No#    1
+    check match_no exists in column    1
+    filter on column    No#    Suspended
+    check match status exists in column    Suspended
+    filter on column    KO Time    03:00 PM
+    check KO Time exists in column    03:00 PM
+    filter on column    KO Time    03:10 PM
+    check other time exists in column    03:10 PM
+    filter on column    Event    LeagueTest-LT
+    check league exists in column    LeagueTest-LT
+    filter on column    Event    LT0E
+    check team name exists in column    LT0E
+    filter on column    Event    Fast Market
+    check match_offer exists in column    Fast Market
+    filter on column    TV/IPTV    BET365
+    check TV exists in column    BET365
+    filter on column    TV/IPTV    Channel1
+    check channel exists in column    Channel1
+    filter on column    Provider    provider1
+    check provider exists in column    provider1
+    filter on column    Provider    Providerlist
+    check other_provider exists in column    Providerlist
+    filter on column    Provider    WatchBet on parent
+    check watchbet exists in column    WatchBet on parent
+    filter on column    Provider    1111
+    check phone exists in column    1111
+    filter on column    MB    72k
+    check maxbet MBC exists in column    72k
+    filter on column    MB    33%
+    check maxbet MBC exists in column    33%
+    filter on column    MB    72k
+    check maxbet CN88 exists in column    72k
+    filter on column    MB    33%
+    check maxbet CN88 exists in column    33%
+    filter on column    Remark    this is r1
+    check remark exists in column    this is r1
+    filter on column    Remark    round 32
+    check round exists in column    round 32
+    filter on column    Remark    Division
+    check division exists in column    Division
+    filter on column    Note    My note 1
+    check note exist in column    My note 1
+    # filter bettype
+    filter on column    HDP    sa
+    check trader exists in column    Handicap    sa
+    filter on column    O/U    sa
+    check trader exists in column    OverUnder    sa
+    filter on column    1H HDP    sa
+    check trader exists in column    Handicap1st    sa
+    filter on column    1H O/U    sa
+    check trader exists in column    OverUnder1st    sa
+    filter on column    1X2    sa
+    check trader exists in column    OneXTwo    sa
+    filter on column    1H 1X2    sa
+    check trader exists in column    OneXTwo1st    sa
+    filter on column    15 mins    sa
+    check trader exists in column    15Mins    sa
+    filter on column    10 mins    sa
+    check trader exists in column    10Mins    sa
+    filter on column    FM    sa
+    check trader exists in column    FM    sa
+    filter on column    AIO    sa
+    check trader exists in column    AIO    sa
+    filter on column    LA    sa
+    check trader exists in column    LA    sa
+    [Teardown]    Close Browser
+
+Verify user can open to Daily Working Shift with filtered date
+    [Documentation]    Ensure user can open Daily Working Shift with corresponding filtered date
+    [Setup]    init    sa
+    Navigate To Menu    Live Game Assignment
+    # get the date
+    ${date}    Get Element Attribute    ${txt_date}@value
+    ${date}    Evaluate    datetime.datetime.strptime('${date}', '%b %d, %Y').strftime('%m/%d/%Y')    datetime    # change format ( Nov 07, 2019 --> 11/07/2019)
+    Wait Until Page Contains Element    ${btn_daily}
+    Click Element    ${btn_daily}
+    ${pop-up} =    ${date}    NEW    # Select latest opened window
+    Select Window    url = https://ha.nexdev.net:7304/V3/DailyWorkingShift?date=${date}    # Select latest opened window
+    Wait Until Element Is Visible    //div[@class='page-title']/span[text() = 'Daily Working Shift Management']
+    Element Should Be Visible    //div[@class='page-title']/span[text() = 'Daily Working Shift Management']
+    [Teardown]    Close Browser
+
+Verify user can add new event/ special events
+    [Documentation]    Verify user can add new match and special matches
+    [Setup]    init    sa
+    ${number}    Generate Random String    3    [NUMBERS]
+    ${matchno}    Set Variable    ${number}
+    ${KO}    Set Variable    01:00 PM
+    ${otherKO}    Set Variable    01:30 PM
+    ${league}    Set Variable    LT-League
+    ${home}    Set Variable    Team T ${number}
+    ${away}    Set Variable    Team L ${number}
+    ${number}    Generate Random String    3    [NUMBERS]
+    Navigate To Menu    Live Game Assignment
+    #add event
+    add new event    ${matchno}    ${KO}    ${otherKO}    ${league}    ${home}    ${away}
+    #select all status
+    search match status    Select All
+    #check match info
+    check match info in table    matchno=${matchno}    KO=${KO}    other_time=${otherKO}    league=${league}    home=${home}    away=${away}
+    #add special event
+    add special event    No.of Corners    ${matchno}A    ${otherKO}    ${league}    ${home}    ${away}
+    #check match info
+    check match info in table    matchno=${matchno}A    KO=${KO}    other_time=${otherKO}    league=${league} - CORNERS    home=${home} No.of Corners    away=${away} No.of Corners
+    #delete event online    this function is not available
+    Comment    delete event    LT-League    Home ${number}    Away ${number}    Yes
+    [Teardown]    Close Browser
+
+Verify user can assign and remove trader on all bettypes
+    [Setup]    Init    sa
+    ${number}    Generate Random String    3    [NUMBERS]
+    ${matchno}    Set Variable    ${number}
+    ${KO}    Set Variable    01:00 PM
+    ${otherKO}    Set Variable    01:30 PM
+    ${league}    Set Variable    LT-League
+    ${home}    Set Variable    Team T ${number}
+    ${away}    Set Variable    Team L ${number}
+    ${trader}    Set Variable    starix16
+    ${other_trader}    Set Variable    starix8
+    Navigate To Menu    Live Game Assignment
+    #add event
+    add new event    ${matchno}    ${KO}    ${otherKO}    ${league}    ${home}    ${away}
+    # sure for displaying Event
+    Wait Until Element Is Visible    ${btn_submit}
+    ${all_status_label}    Set Variable    //div[text()='Match Status']/following-sibling::div//span[text()='All items are selected']    # 'All items are selected'
+    ${flag}    Is Element Invisible    ${all_status_label}
+    Run Keyword If    '${flag}'=='True'    search match status    Select All
+    #assign trader
+    assign trader    ${league}    ${home}    ${away}    HDP    ${trader}
+    assign trader    ${league}    ${home}    ${away}    O/U    ${trader}
+    assign trader    ${league}    ${home}    ${away}    1H HDP    ${trader}
+    Comment    assign trader    ${league}    ${home}    ${away}    1H O/U    ${trader}
+    Comment    assign trader    ${league}    ${home}    ${away}    1X2    ${trader}
+    Comment    assign trader    ${league}    ${home}    ${away}    1H 1X2    ${trader}
+    Comment    assign trader    ${league}    ${home}    ${away}    15 mins    ${trader}
+    Comment    assign trader    ${league}    ${home}    ${away}    10 mins    ${trader}
+    Comment    assign trader    ${league}    ${home}    ${away}    FM    ${trader}
+    Comment    assign trader    ${league}    ${home}    ${away}    AIO    ${trader}
+    Comment    assign trader    ${league}    ${home}    ${away}    LA    ${trader}
+    #assign other trader
+    assign other trader    ${league}    ${home}    ${away}    HDP    ${other_trader}
+    assign other trader    ${league}    ${home}    ${away}    O/U    ${other_trader}
+    assign other trader    ${league}    ${home}    ${away}    1H HDP    ${other_trader}
+    Comment    assign other trader    ${league}    ${home}    ${away}    1H O/U    ${other_trader}
+    Comment    assign other trader    ${league}    ${home}    ${away}    1X2    ${other_trader}
+    Comment    assign other trader    ${league}    ${home}    ${away}    1H 1X2    ${other_trader}
+    Comment    assign other trader    ${league}    ${home}    ${away}    15 mins    ${other_trader}
+    Comment    assign other trader    ${league}    ${home}    ${away}    10 mins    ${other_trader}
+    Comment    assign other trader    ${league}    ${home}    ${away}    FM    ${other_trader}
+    Comment    assign other trader    ${league}    ${home}    ${away}    AIO    ${other_trader}
+    Comment    assign other trader    ${league}    ${home}    ${away}    LA    ${other_trader}
+    #check trader exists
+    check trader exists on bettype of match    ${league}    ${home}    ${away}    HDP    ${trader}
+    check trader exists on bettype of match    ${league}    ${home}    ${away}    O/U    ${trader}
+    check trader exists on bettype of match    ${league}    ${home}    ${away}    1H HDP    ${trader}
+    Comment    check trader exists on bettype of match    ${league}    ${home}    ${away}    1H O/U    ${trader}
+    Comment    check trader exists on bettype of match    ${league}    ${home}    ${away}    1X2    ${trader}
+    Comment    check trader exists on bettype of match    ${league}    ${home}    ${away}    1H 1X2    ${trader}
+    Comment    check trader exists on bettype of match    ${league}    ${home}    ${away}    15 mins    ${trader}
+    Comment    check trader exists on bettype of match    ${league}    ${home}    ${away}    10 mins    ${trader}
+    Comment    check trader exists on bettype of match    ${league}    ${home}    ${away}    FM    ${trader}
+    Comment    check trader exists on bettype of match    ${league}    ${home}    ${away}    AIO    ${trader}
+    Comment    check trader exists on bettype of match    ${league}    ${home}    ${away}    LA    ${trader}
+    #check other trader exists
+    check other trader exists on bettype of match    ${league}    ${home}    ${away}    HDP    ${other_trader}
+    check other trader exists on bettype of match    ${league}    ${home}    ${away}    O/U    ${other_trader}
+    check other trader exists on bettype of match    ${league}    ${home}    ${away}    1H HDP    ${other_trader}
+    Comment    check other trader exists on bettype of match    ${league}    ${home}    ${away}    1H O/U    ${other_trader}
+    Comment    check other trader exists on bettype of match    ${league}    ${home}    ${away}    1X2    ${other_trader}
+    Comment    check other trader exists on bettype of match    ${league}    ${home}    ${away}    1H 1X2    ${other_trader}
+    Comment    check other trader exists on bettype of match    ${league}    ${home}    ${away}    15 mins    ${other_trader}
+    Comment    check other trader exists on bettype of match    ${league}    ${home}    ${away}    10 mins    ${other_trader}
+    Comment    check other trader exists on bettype of match    ${league}    ${home}    ${away}    FM    ${other_trader}
+    Comment    check other trader exists on bettype of match    ${league}    ${home}    ${away}    AIO    ${other_trader}
+    Comment    check other trader exists on bettype of match    ${league}    ${home}    ${away}    LA    ${other_trader}
+    #remove trader/ other trader
+    remove other trader    ${league}    ${home}    ${away}    HDP    ${other_trader}
+    remove trader    ${league}    ${home}    ${away}    HDP    ${trader}
+    remove trader    ${league}    ${home}    ${away}    O/U    ${trader}
+    remove trader    ${league}    ${home}    ${away}    1H HDP    ${trader}
+    Comment    remove trader    ${league}    ${home}    ${away}    1H O/U    ${trader}
+    Comment    remove trader    ${league}    ${home}    ${away}    1X2    ${trader}
+    Comment    remove trader    ${league}    ${home}    ${away}    1H 1X2    ${trader}
+    Comment    remove trader    ${league}    ${home}    ${away}    15 mins    ${trader}
+    Comment    remove trader    ${league}    ${home}    ${away}    10 mins    ${trader}
+    Comment    remove trader    ${league}    ${home}    ${away}    FM    ${trader}
+    Comment    remove trader    ${league}    ${home}    ${away}    AIO    ${trader}
+    Comment    remove trader    ${league}    ${home}    ${away}    LA    ${trader}
+    #clear data:    Function "delete Event from Details Info" is removed from OWP by User --> so this action is not available to work
+    Comment    delete event    ${league}    ${home}    ${away}    Yes
+    [Teardown]
+
+Veirfy message displays when adding new event
+    [Setup]    init    sa
+    ${number}    Generate Random String    3    [NUMBERS]
+    ${matchno}    Set Variable    ${number}
+    ${KO}    Set Variable    01:00 PM
+    ${otherKO}    Set Variable    01:30 PM
+    ${league}    Set Variable    LT-League
+    ${home}    Set Variable    Team T ${number}
+    ${away}    Set Variable    Team L ${number}
+    Navigate To Menu    Live Game Assignment
+    #add event
+    add new event    ${matchno}    ${KO}    ${otherKO}    ${league}    ${home}    ${away}
+    #click OK on notification
+    sleep    7s
+    check message exists    The event has been added successfully!
+    Click Element    //button[text()='OK']    #close message
+    #Check error message duplicate matchno    Please input required fields
+    add new event    ${matchno}    ${KO}    ${otherKO}    ${league}    ${home}    ${away}
+    check message exists    The Match No. is used. Please choose another one.
+    Click Element    //button[text()='OK']    #close message
+    #Check error message duplicate match
+    Input Text    ${txt_match_no}    ${matchno}
+    Click Element    ${btn_add}
+    check message exists    This match is existing. Do you want to go to this match?
+    Click Element    //button[text()='Cancel']    #close message
+    #Check message when close pop-up Add
+    Click Element    ${btn_cancel}
+    check message exists    Do you want to close ?
+    Click Element    //button[text()='OK']
+    #Clear Data
+    Comment    delete event    ${league}    ${home}    ${away}    Yes
+    [Teardown]    Close Browser

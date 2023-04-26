@@ -1,0 +1,142 @@
+*** Settings ***
+Suite Setup       init    ${user_login}
+Suite Teardown    Close All Browsers
+Test Setup
+Test Teardown
+Resource          ../Interface/Usermagement.txt
+Resource          ../Interface/login.txt
+Resource          ../Action/common.txt
+Resource          ../Action/usermanagement_action.txt
+Library           ExtendedSelenium2Library
+Library           String
+Resource          ../Interface/common_interface.txt
+Resource          ../Interface/livedetail_note.txt
+Resource          ../Action/livedetail_note.txt
+Resource          ../Action/livedetail_odds.txt
+
+*** Test Cases ***
+Verify Add Note
+    Go To    http://ha.nexdev.net:7304/V3/EventManagement/LiveDetail/Index/313040
+    Add New Note    This is note for main match
+    Verify Added or Edited Note    This is note for main match
+
+Verify Edit Note
+    Go To    http://ha.nexdev.net:7304/V3/EventManagement/LiveDetail/Index/313040
+    # Edit note and cancel
+    Edit Note    This is note for main match    This is note for Minor matches    Cancel
+    Verify Added or Edited Note    This is note for main match
+    # Edit note and save
+    Edit Note    This is note for main match    This is note for Minor matches    Save
+    Verify Added or Edited Note    This is note for Minor matches
+
+Verify Delete Note
+    Go To    http://ha.nexdev.net:7304/V3/EventManagement/LiveDetail/Index/313040
+    # Delete note and cancel
+    Delete Note    This is note for Minor matches    Cancel
+    Verify Added or Edited Note    This is note for Minor matches
+    # Delete note and save
+    Delete Note    This is note for Minor matches    Ok
+    Verify Added or Edited Note    This is note for Minor matches
+
+Verify Odds Area_No Odd
+    Go To    http://ha.nexdev.net:7304/V3/EventManagement/LiveDetail/Index/313040
+    Verify Table Header    # Header, Add button, There is no data should be displayed
+    Verify Bettype List    #There are 6 bet types: Handicap, Over/Under, FT.1X2, 1H Handicap, 1H Over/Under, 1H 1X2
+    Verify Team List    # Goal should contain Home name, Away name of match
+    Click Element    xpath=//*[@id="root"]//button[@class='icon-cancel']
+
+Verify Add Odd
+    # Set variable
+    ${odd}    Set Variable    1
+    ${home_odd}    Set Variable    1
+    ${away_odd}    Set Variable    1
+    ${draw_odd}    Set Variable    1
+    Go To    http://ha.nexdev.net:7304/V3/EventManagement/LiveDetail/Index/313040
+    # Main
+    ${home}    ${away}    Get Team Name
+    Add New Odd    1H Handicap    ${away}    ${odd}    ${home_odd}    ${away_odd}    ${EMPTY}
+    ...    Cancel
+    Verify Added Odd    1H Handicap    ${away}@${odd}    ${home_odd}    ${away_odd}    ${EMPTY}
+    Add New Odd    1H Handicap    ${away}    ${odd}    ${home_odd}    ${away_odd}    ${EMPTY}
+    ...    Save
+    Verify Added Odd    1H Handicap    ${away}@${odd}    ${home_odd}    ${away_odd}    ${EMPTY}
+    Add New Odd    Handicap    ${away}    ${odd}    ${home_odd}    ${away_odd}    ${EMPTY}
+    ...    Cancel
+    Add New Odd    Handicap    ${away}    ${odd}    ${home_odd}    ${away_odd}    ${EMPTY}
+    ...    Save
+    Verify Added Odd    Handicap    ${away}@${odd}    ${home_odd}    ${away_odd}    ${EMPTY}
+    Add New Odd    Over/Under    ${EMPTY}    ${odd}    ${home_odd}    ${away_odd}    ${EMPTY}
+    ...    Cancel
+    Add New Odd    Over/Under    ${EMPTY}    ${odd}    ${home_odd}    ${away_odd}    ${EMPTY}
+    ...    Save
+    Verify Added Odd    Over/Under    @${odd}    ${home_odd}    ${away_odd}    ${EMPTY}
+    Add New Odd    1H Over/Under    ${EMPTY}    ${odd}    ${home_odd}    ${away_odd}    ${EMPTY}
+    ...    Cancel
+    Add New Odd    1H Over/Under    ${EMPTY}    ${odd}    ${home_odd}    ${away_odd}    ${EMPTY}
+    ...    Save
+    Verify Added Odd    1H Over/Under    @${odd}    ${home_odd}    ${away_odd}    ${EMPTY}
+    Add New Odd    FT.1X2    ${EMPTY}    ${EMPTY}    ${home_odd}    ${away_odd}    ${draw_odd}
+    ...    Cancel
+    Add New Odd    FT.1X2    ${EMPTY}    ${EMPTY}    ${home_odd}    ${away_odd}    ${draw_odd}
+    ...    Save
+    Verify Added Odd    FT.1X2    ${EMPTY}    ${home_odd}    ${away_odd}    ${draw_odd}
+    Add New Odd    1H 1X2    ${EMPTY}    ${EMPTY}    ${home_odd}    ${away_odd}    ${draw_odd}
+    ...    Cancel
+    Add New Odd    1H 1X2    ${EMPTY}    ${EMPTY}    ${home_odd}    ${away_odd}    ${draw_odd}
+    ...    Save
+    Verify Added Odd    1H 1X2    ${EMPTY}    ${home_odd}    ${away_odd}    ${draw_odd}
+
+Verify Delete Odd
+    # Set variable
+    ${odd}    Set Variable    1
+    ${home_odd}    Set Variable    1
+    ${away_odd}    Set Variable    1
+    ${draw_odd}    Set Variable    1
+    Go To    http://ha.nexdev.net:7304/V3/EventManagement/LiveDetail/Index/313040
+    # Main
+    ${home}    ${away}    Get Team Name
+    Comment    Add New Odd    1H Handicap    ${away}    ${odd}    ${home_odd}    ${away_odd}
+    ...    ${EMPTY}    Cancel
+    Delete Odd    1H Handicap    ${away}@${odd}    ${home_odd}    ${away_odd}    ${EMPTY}    Ok
+    Verify Added Odd    1H Handicap    ${away}@${odd}    ${home_odd}    ${away_odd}    ${EMPTY}
+    Comment    Add New Odd    Handicap    ${away}    ${odd}    ${home_odd}    ${away_odd}
+    ...    ${EMPTY}    Cancel
+    Delete Odd    Handicap    ${away}@${odd}    ${home_odd}    ${away_odd}    ${EMPTY}    Ok
+    Verify Added Odd    Handicap    ${away}@${odd}    ${home_odd}    ${away_odd}    ${EMPTY}
+    Comment    Add New Odd    Over/Under    ${EMPTY}    ${odd}    ${home_odd}    ${away_odd}
+    ...    ${EMPTY}    Cancel
+    Delete Odd    Over/Under    @${odd}    ${home_odd}    ${away_odd}    ${EMPTY}    Ok
+    Verify Added Odd    Over/Under    @${odd}    ${home_odd}    ${away_odd}    ${EMPTY}
+    Comment    Add New Odd    1H Over/Under    ${EMPTY}    ${odd}    ${home_odd}    ${away_odd}
+    ...    ${EMPTY}    Cancel
+    Delete Odd    1H Over/Under    @${odd}    ${home_odd}    ${away_odd}    ${EMPTY}    Ok
+    Verify Added Odd    1H Over/Under    @${odd}    ${home_odd}    ${away_odd}    ${EMPTY}
+    Comment    Add New Odd    FT.1X2    ${EMPTY}    ${EMPTY}    ${home_odd}    ${away_odd}
+    ...    ${draw_odd}    Cancel
+    Delete Odd    FT.1X2    ${EMPTY}    ${home_odd}    ${away_odd}    ${draw_odd}    Ok
+    Verify Added Odd    FT.1X2    ${EMPTY}    ${home_odd}    ${away_odd}    ${draw_odd}
+    Comment    Add New Odd    1H 1X2    ${EMPTY}    ${EMPTY}    ${home_odd}    ${away_odd}
+    ...    ${draw_odd}    Cancel
+    Delete Odd    1H 1X2    ${EMPTY}    ${home_odd}    ${away_odd}    ${draw_odd}    Ok
+    Verify Added Odd    1H 1X2    ${EMPTY}    ${home_odd}    ${away_odd}    ${draw_odd}
+
+Verify Edit Odd
+    Go To    http://ha.nexdev.net:7304/V3/EventManagement/LiveDetail/Index/313040
+    ${home}    ${away}    Get Team Name
+    # Set variable
+    ${odd}    Set Variable    1
+    ${home_odd}    Set Variable    1
+    ${away_odd}    Set Variable    1
+    ${draw_odd}    Set Variable    1
+    ${new_team}    Set Variable    ${home}
+    ${new_goalodd}    Set Variable    2
+    ${new_homeodd}    Set Variable    2
+    ${new_awayodd}    Set Variable    2
+    Add New Odd    1H Handicap    ${away}    ${odd}    ${home_odd}    ${away_odd}    ${EMPTY}
+    ...    Save
+    Edit Bet type odds    1H Handicap    ${away}@${odd}    ${home_odd}    ${away_odd}    ${EMPTY}    ${new_team}
+    ...    ${new_goalodd}    ${new_homeodd}    ${new_awayodd}    ${EMPTY}    Cancel
+    Verify Added Odd    1H Handicap    ${away}@${odd}    ${home_odd}    ${away_odd}    ${EMPTY}
+    Edit Bet type odds    1H Handicap    ${away}@${odd}    ${home_odd}    ${away_odd}    ${EMPTY}    ${new_team}
+    ...    ${new_goalodd}    ${new_homeodd}    ${new_awayodd}    ${EMPTY}    Save
+    Verify Added Odd    1H Handicap    ${new_team}@${new_goalodd}    ${new_homeodd}    ${new_awayodd}    ${EMPTY}

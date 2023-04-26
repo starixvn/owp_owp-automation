@@ -1,0 +1,291 @@
+*** Settings ***
+Resource          ../Interface/Usermagement.txt
+Library           Collections
+Library           ExtendedSelenium2Library
+Resource          ../Interface/common_interface.txt
+Resource          ../Interface/livedetail_note.txt
+Resource          ../Interface/livedetail_odds.txt
+Library           String
+Resource          livedetail_note.txt
+
+*** Keywords ***
+Verify Table Header
+    Page Should Contain Element    xpath=//*[@id="root"]//h4[contains(text(),'Recommend Odds')]
+    Comment    Page Should Contain Element    ${odd_empty_txt}
+    Page Should Contain Element    ${add_btn}
+    @{header_list}    Create List
+    : FOR    ${i}    IN RANGE    1    7
+    \    ${header_text}    Get Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/thead/tr/th[${i}]
+    \    Append To List    ${header_list}    ${header_text}
+    Should Be Equal    ${header_list}    ${expected_headerlist}
+
+Verify Bettype List
+    Click Element    ${add_btn}
+    @{btype_list}    Create List
+    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr/td[1]/div/div/div/div[1]/div[1]
+    : FOR    ${i}    IN RANGE    0    6
+    \    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//div[@id='react-select-10-option-${i}']
+    \    ${item}    Run Keyword If    '${status}'=='True'    Get Text    xpath=//div[@id='react-select-10-option-${i}']
+    \    Append To List    ${btype_list}    ${item}
+    Log    ${btype_list}
+    Should Be Equal    ${btype_list}    ${bettype_list}
+
+Verify Team List
+    ${teamname}    Get Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[2]/span[contains(text(),'')][1]
+    ${home}    Fetch From Left    ${teamname}    ${SPACE}
+    ${away}    Fetch From Right    ${teamname}    ${SPACE}
+    @{mgoal_list}    Create List    ${home}    ${away}
+    @{goal_list}    Create List
+    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr/td[2]/div[1]/div/div/div[1]
+    : FOR    ${i}    IN RANGE    0    2
+    \    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="react-select-11-option-${i}"]
+    \    ${item}    Run Keyword If    '${status}'=='True'    Get Text    xpath=//*[@id="react-select-11-option-${i}"]
+    \    Append To List    ${goal_list}    ${item}
+    Log    ${goal_list}
+    Should Be Equal    ${goal_list}    ${mgoal_list}
+
+Add New Odd
+    [Arguments]    ${bettype}=${EMPTY}    ${team}=${EMPTY}    ${odd}=${EMPTY}    ${home}=${EMPTY}    ${away}=${EMPTY}    ${draw}=${EMPTY}
+    ...    ${action}=${EMPTY}
+    Wait Until Element Is Visible    ${add_btn}    timeout=10s
+    Click Element    ${add_btn}
+    Run Keyword If    '${bettype}'=='Handicap' and '${team}'!='${EMPTY}' and '${odd}'!='${EMPTY}' and '${home}'!='${EMPTY}' and '${away}'!='${EMPTY}' and '${draw}'=='${EMPTY}' and '${action}' =='Cancel'    Run keywords    Select Bet type    ${bettype}
+    ...    AND    Select Team    ${team}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[2]/div[2]/input    ${odd}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[3]/div/input    ${home}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[4]/div/input    ${away}
+    ...    AND    Click Element    xpath=//*[@id="root"]//button[@class='icon-cancel']
+    Run Keyword If    '${bettype}'=='Handicap' and '${team}'!='${EMPTY}' and '${odd}'!='${EMPTY}' and '${home}'!='${EMPTY}' and '${away}'!='${EMPTY}' and '${draw}'=='${EMPTY}' and '${action}' =='Save'    Run keywords    Select Bet type    ${bettype}
+    ...    AND    Select Team    ${team}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[2]/div[2]/input    ${odd}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[3]/div/input    ${home}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[4]/div/input    ${away}
+    ...    AND    Click Element    xpath=//*[@id="root"]//button[@class='icon-save']
+    ...    AND    Check Warning Message    The recommend odds is already existed. Please add another one!
+    Run Keyword If    '${bettype}'=='1H Handicap' and '${team}'!='${EMPTY}' and '${odd}'!='${EMPTY}' and '${home}'!='${EMPTY}' and '${away}'!='${EMPTY}' and '${draw}'=='${EMPTY}' and '${action}' =='Cancel'    Run keywords    Select Bet type    ${bettype}
+    ...    AND    Select Team    ${team}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[2]/div[2]/input    ${odd}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[3]/div/input    ${home}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[4]/div/input    ${away}
+    ...    AND    Click Element    xpath=//*[@id="root"]//button[@class='icon-cancel']
+    Run Keyword If    '${bettype}'=='1H Handicap' and '${team}'!='${EMPTY}' and '${odd}'!='${EMPTY}' and '${home}'!='${EMPTY}' and '${away}'!='${EMPTY}' and '${draw}'=='${EMPTY}' and '${action}' =='Save'    Run keywords    Select Bet type    ${bettype}
+    ...    AND    Select Team    ${team}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[2]/div[2]/input    ${odd}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[3]/div/input    ${home}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[4]/div/input    ${away}
+    ...    AND    Click Element    xpath=//*[@id="root"]//button[@class='icon-save']
+    ...    AND    Check Warning Message    The recommend odds is already existed. Please add another one!
+    Run Keyword If    '${bettype}'=='Over/Under' and '${team}'=='${EMPTY}' and '${odd}'!='${EMPTY}' and '${home}'!='${EMPTY}' and '${away}'!='${EMPTY}' and '${draw}'=='${EMPTY}' and '${action}' =='Cancel'    Run keywords    Select Bet type    ${bettype}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[2]/div[2]/input    ${odd}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[3]/div/input    ${home}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[4]/div/input    ${away}
+    ...    AND    Click Element    xpath=//*[@id="root"]//button[@class='icon-cancel']
+    Run Keyword If    '${bettype}'=='Over/Under' and '${team}'=='${EMPTY}' and '${odd}'!='${EMPTY}' and '${home}'!='${EMPTY}' and '${away}'!='${EMPTY}' and '${draw}'=='${EMPTY}' and '${action}' =='Save'    Run keywords    Select Bet type    ${bettype}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[2]/div[2]/input    ${odd}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[3]/div/input    ${home}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[4]/div/input    ${away}
+    ...    AND    Click Element    xpath=//*[@id="root"]//button[@class='icon-save']
+    ...    AND    Check Warning Message    The recommend odds is already existed. Please add another one!
+    Run Keyword If    '${bettype}'=='1H Over/Under' and '${team}'=='${EMPTY}' and '${odd}'!='${EMPTY}' and '${home}'!='${EMPTY}' and '${away}'!='${EMPTY}' and '${draw}'=='${EMPTY}' and '${action}' =='Cancel'    Run keywords    Select Bet type    ${bettype}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[2]/div[2]/input    ${odd}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[3]/div/input    ${home}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[4]/div/input    ${away}
+    ...    AND    Click Element    xpath=//*[@id="root"]//button[@class='icon-cancel']
+    Run Keyword If    '${bettype}'=='1H Over/Under' and '${team}'=='${EMPTY}' and '${odd}'!='${EMPTY}' and '${home}'!='${EMPTY}' and '${away}'!='${EMPTY}' and '${draw}'=='${EMPTY}' and '${action}' =='Save'    Run keywords    Select Bet type    ${bettype}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[2]/div[2]/input    ${odd}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[3]/div/input    ${home}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[4]/div/input    ${away}
+    ...    AND    Click Element    xpath=//*[@id="root"]//button[@class='icon-save']
+    ...    AND    Check Warning Message    The recommend odds is already existed. Please add another one!
+    Run Keyword If    '${bettype}'=='FT.1X2' and '${team}'=='${EMPTY}' and '${odd}'=='${EMPTY}' and '${home}'!='${EMPTY}' and '${away}'!='${EMPTY}' and '${draw}'!='${EMPTY}' and '${action}' =='Cancel'    Run keywords    Select Bet type    ${bettype}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[3]/div/input    ${home}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[4]/div/input    ${away}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[5]/div/input    ${draw}
+    ...    AND    Click Element    xpath=//*[@id="root"]//button[@class='icon-cancel']
+    Run Keyword If    '${bettype}'=='FT.1X2' and '${team}'=='${EMPTY}' and '${odd}'=='${EMPTY}' and '${home}'!='${EMPTY}' and '${away}'!='${EMPTY}' and '${draw}'!='${EMPTY}' and '${action}' =='Save'    Run keywords    Select Bet type    ${bettype}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[3]/div/input    ${home}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[4]/div/input    ${away}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[5]/div/input    ${draw}
+    ...    AND    Click Element    xpath=//*[@id="root"]//button[@class='icon-save']
+    ...    AND    Check Warning Message    The recommend odds is already existed. Please add another one!
+    Run Keyword If    '${bettype}'=='1H 1X2' and '${team}'=='${EMPTY}' and '${odd}'=='${EMPTY}' and '${home}'!='${EMPTY}' and '${away}'!='${EMPTY}' and '${draw}'!='${EMPTY}' and '${action}' =='Cancel'    Run keywords    Select Bet type    ${bettype}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[3]/div/input    ${home}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[4]/div/input    ${away}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[5]/div/input    ${draw}
+    ...    AND    Click Element    xpath=//*[@id="root"]//button[@class='icon-cancel']
+    Run Keyword If    '${bettype}'=='1H 1X2' and '${team}'=='${EMPTY}' and '${odd}'=='${EMPTY}' and '${home}'!='${EMPTY}' and '${away}'!='${EMPTY}' and '${draw}'!='${EMPTY}' and '${action}' =='Save'    Run keywords    Select Bet type    ${bettype}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[3]/div/input    ${home}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[4]/div/input    ${away}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[1]/td[5]/div/input    ${draw}
+    ...    AND    Click Element    xpath=//*[@id="root"]//button[@class='icon-save']
+    ...    AND    Check Warning Message    The recommend odds is already existed. Please add another one!
+    Reload Page
+
+Select Bet type
+    [Arguments]    ${bettype}
+    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr/td[1]/div/div/div/div[1]/div[1]
+    : FOR    ${i}    IN RANGE    0    6
+    \    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//div[@id='react-select-10-option-${i}']
+    \    ${item}    Run Keyword If    '${status}'=='True'    Get Text    xpath=//div[@id='react-select-10-option-${i}']
+    \    Run Keyword If    '${item}'=='${bettype}'    Run Keywords    Click Element    xpath=//div[@id='react-select-10-option-${i}']
+    \    ...    AND    Exit For Loop
+
+Select Team
+    [Arguments]    ${team}
+    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr/td[2]/div[1]/div/div/div[1]
+    : FOR    ${i}    IN RANGE    0    2
+    \    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="react-select-11-option-${i}"]
+    \    ${item}    Run Keyword If    '${status}'=='True'    Get Text    xpath=//*[@id="react-select-11-option-${i}"]
+    \    Run Keyword If    '${item}'=='${team}'    Run Keywords    Click Element    xpath=//*[@id="react-select-11-option-${i}"]
+    \    ...    AND    Exit For Loop
+
+Delete Odd
+    [Arguments]    ${bettype}    ${goal}    ${home}    ${away}    ${draw}    ${action}
+    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr/td[1]
+    ${count}    Run Keyword If    '${status}'== 'True'    Get Matching Xpath Count    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr/td[1]
+    : FOR    ${i}    IN RANGE    1    ${count} + 1
+    \    ${get_bettype}    get text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${i}]/td[1]
+    \    Run Keyword If    '${get_bettype}' == '${bettype}' and '${action}' == 'Ok'    Run Keywords    Compare Odd Of Bettype    ${bettype}    ${goal}
+    \    ...    ${home}    ${away}    ${draw}    ${i}
+    \    ...    AND    Click Element    xpath=//*[@id="root"]//tr[${i}]//button[@class='icon-delete']
+    \    ...    AND    Get Alert and confirm odds    Are you sure you want to permanently delete this recommend odds?    ${action}
+    \    ...    AND    Exit For Loop
+    \    Run Keyword If    '${get_bettype}' == '${bettype}' and '${action}' == 'Cancel'    Run Keywords    Compare Odd Of Bettype    ${bettype}    ${goal}
+    \    ...    ${home}    ${away}    ${draw}    ${i}
+    \    ...    AND    Click Element    xpath=//*[@id="root"]//tr[${i}]//button[@class='icon-delete']
+    \    ...    AND    Get Alert and confirm odds    Are you sure you want to permanently delete this recommend odds?    ${action}
+    \    ...    AND    Exit For Loop
+    Sleep    3s
+
+Get Team Name
+    ${teamname}    Get Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[2]/span[contains(text(),'')][1]
+    ${home}    Fetch From Left    ${teamname}    ${SPACE}
+    ${away}    Fetch From Right    ${teamname}    ${SPACE}
+    [Return]    ${home}    ${away}
+
+Check Warning Message
+    [Arguments]    ${expected_alert}
+    ${alert_status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="swal2-content"]
+    Run Keyword If    '${alert_status}'=='True'    Warning Message    ${expected_alert}
+
+Warning Message
+    [Arguments]    ${expected_alert}
+    ${content}    Get Text    xpath=//*[@id="swal2-content"]
+    Should Be Equal    ${expected_alert}    ${content}
+    Wait Until Element Is Visible    xpath=/html/body/div[2]/div/div[3]/button[contains(text(),'OK')]
+    Click Element    xpath=/html/body/div[2]/div/div[3]/button[contains(text(),'OK')]
+
+Compare Odd Of Bettype
+    [Arguments]    ${bettype}    ${goal}    ${home}    ${away}    ${draw}    ${position}
+    [Tags]
+    @{expected_list}    Create List    ${bettype}    ${goal}    ${home}    ${away}    ${draw}
+    @{oddlist}    Create List
+    : FOR    ${i}    IN RANGE    1    6
+    \    ${text}    Get Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[${i}]
+    \    Append To List    ${oddlist}    ${text}
+    ${status}    Run Keyword And Return Status    Should Be Equal    ${oddlist}    ${expected_list}
+    Run keyword if    '${status}'=='True'    Log    This ${bettype} with ${goal} is added or editted successfully
+    ...    ELSE    Log    This ${bettype} with ${goal} is not existing
+
+Verify Added Odd
+    [Arguments]    ${bettype}    ${goal}    ${home}    ${away}    ${draw}
+    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr/td[1]
+    ${count}    Run Keyword If    '${status}'== 'True'    Get Matching Xpath Count    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr/td[1]
+    : FOR    ${i}    IN RANGE    1    ${count} + 1
+    \    ${get_bettype}    get text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${i}]/td[1]
+    \    Run Keyword If    '${get_bettype}' == '${bettype}'    Compare Odd Of Bettype    ${bettype}    ${goal}    ${home}
+    \    ...    ${away}    ${draw}    ${i}
+    \    Run Keyword If    '${get_bettype}' != '${bettype}'    Log    This ${bettype} is not existing
+    Sleep    3s
+    Comment    Log    ${bettype} Bet Type has been deleted
+
+Edit Odds
+    [Arguments]    ${bettype}    ${team}    ${odd}    ${home}    ${away}    ${draw}
+    ...    ${action}    ${position}
+    Run Keyword If    '${bettype}'=='Handicap' and '${team}'!='${EMPTY}' and '${odd}'!='${EMPTY}' and '${home}'!='${EMPTY}' and '${away}'!='${EMPTY}' and '${draw}'=='${EMPTY}' and '${action}' =='Cancel'    Run keywords    Select Team To Edit    ${team}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[2]/div[2]/input    ${odd}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[3]/div/input    ${home}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[4]/div/input    ${away}
+    ...    AND    Click Element    xpath=//*[@id="root"]//button[@class='icon-cancel']
+    Run Keyword If    '${bettype}'=='Handicap' and '${team}'!='${EMPTY}' and '${odd}'!='${EMPTY}' and '${home}'!='${EMPTY}' and '${away}'!='${EMPTY}' and '${draw}'=='${EMPTY}' and '${action}' =='Save'    Run keywords    Select Team To Edit    ${team}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[2]/div[2]/input    ${odd}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[3]/div/input    ${home}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[4]/div/input    ${away}
+    ...    AND    Click Element    xpath=//*[@id="root"]//button[@class='icon-save']
+    ...    AND    Check Warning Message    The recommend odds is already existed. Please add another one!
+    Run Keyword If    '${bettype}'=='1H Handicap' and '${team}'!='${EMPTY}' and '${odd}'!='${EMPTY}' and '${home}'!='${EMPTY}' and '${away}'!='${EMPTY}' and '${draw}'=='${EMPTY}' and '${action}' =='Cancel'    Run keywords    Select Team To Edit    ${team}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[2]/div[2]/input    ${odd}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[3]/div/input    ${home}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[4]/div/input    ${away}
+    ...    AND    Click Element    xpath=//*[@id="root"]//button[@class='icon-cancel']
+    Run Keyword If    '${bettype}'=='1H Handicap' and '${team}'!='${EMPTY}' and '${odd}'!='${EMPTY}' and '${home}'!='${EMPTY}' and '${away}'!='${EMPTY}' and '${draw}'=='${EMPTY}' and '${action}' =='Save'    Run keywords    Select Team To Edit    ${team}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[2]/div[2]/input    ${odd}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[3]/div/input    ${home}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[4]/div/input    ${away}
+    ...    AND    Click Element    xpath=//*[@id="root"]//button[@class='icon-save']
+    ...    AND    Check Warning Message    The recommend odds is already existed. Please add another one!
+    Run Keyword If    '${bettype}'=='Over/Under' and '${team}'=='${EMPTY}' and '${odd}'!='${EMPTY}' and '${home}'!='${EMPTY}' and '${away}'!='${EMPTY}' and '${draw}'=='${EMPTY}' and '${action}' =='Cancel'    Run keywords    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[2]/div[2]/input    ${odd}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[3]/div/input    ${home}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[4]/div/input    ${away}
+    ...    AND    Click Element    xpath=//*[@id="root"]//button[@class='icon-cancel']
+    Run Keyword If    '${bettype}'=='Over/Under' and '${team}'=='${EMPTY}' and '${odd}'!='${EMPTY}' and '${home}'!='${EMPTY}' and '${away}'!='${EMPTY}' and '${draw}'=='${EMPTY}' and '${action}' =='Save'    Run keywords    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[2]/div[2]/input    ${odd}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[3]/div/input    ${home}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[4]/div/input    ${away}
+    ...    AND    Click Element    xpath=//*[@id="root"]//button[@class='icon-save']
+    ...    AND    Check Warning Message    The recommend odds is already existed. Please add another one!
+    Run Keyword If    '${bettype}'=='1H Over/Under' and '${team}'=='${EMPTY}' and '${odd}'!='${EMPTY}' and '${home}'!='${EMPTY}' and '${away}'!='${EMPTY}' and '${draw}'=='${EMPTY}' and '${action}' =='Cancel'    Run keywords    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[2]/div[2]/input    ${odd}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[3]/div/input    ${home}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[4]/div/input    ${away}
+    ...    AND    Click Element    xpath=//*[@id="root"]//button[@class='icon-cancel']
+    Run Keyword If    '${bettype}'=='1H Over/Under' and '${team}'=='${EMPTY}' and '${odd}'!='${EMPTY}' and '${home}'!='${EMPTY}' and '${away}'!='${EMPTY}' and '${draw}'=='${EMPTY}' and '${action}' =='Save'    Run keywords    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[2]/div[2]/input    ${odd}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[3]/div/input    ${home}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[4]/div/input    ${away}
+    ...    AND    Click Element    xpath=//*[@id="root"]//button[@class='icon-save']
+    ...    AND    Check Warning Message    The recommend odds is already existed. Please add another one!
+    Run Keyword If    '${bettype}'=='FT.1X2' and '${team}'=='${EMPTY}' and '${odd}'=='${EMPTY}' and '${home}'!='${EMPTY}' and '${away}'!='${EMPTY}' and '${draw}'!='${EMPTY}' and '${action}' =='Cancel'    Run keywords    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[3]/div/input    ${home}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[4]/div/input    ${away}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[5]/div/input    ${draw}
+    ...    AND    Click Element    xpath=//*[@id="root"]//button[@class='icon-cancel']
+    Run Keyword If    '${bettype}'=='FT.1X2' and '${team}'=='${EMPTY}' and '${odd}'=='${EMPTY}' and '${home}'!='${EMPTY}' and '${away}'!='${EMPTY}' and '${draw}'!='${EMPTY}' and '${action}' =='Save'    Run keywords    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[3]/div/input    ${home}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[4]/div/input    ${away}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[5]/div/input    ${draw}
+    ...    AND    Click Element    xpath=//*[@id="root"]//button[@class='icon-save']
+    ...    AND    Check Warning Message    The recommend odds is already existed. Please add another one!
+    Run Keyword If    '${bettype}'=='1H 1X2' and '${team}'=='${EMPTY}' and '${odd}'=='${EMPTY}' and '${home}'!='${EMPTY}' and '${away}'!='${EMPTY}' and '${draw}'!='${EMPTY}' and '${action}' =='Cancel'    Run keywords    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[3]/div/input    ${home}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[4]/div/input    ${away}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[5]/div/input    ${draw}
+    ...    AND    Click Element    xpath=//*[@id="root"]//button[@class='icon-cancel']
+    Run Keyword If    '${bettype}'=='1H 1X2' and '${team}'=='${EMPTY}' and '${odd}'=='${EMPTY}' and '${home}'!='${EMPTY}' and '${away}'!='${EMPTY}' and '${draw}'!='${EMPTY}' and '${action}' =='Save'    Run keywords    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[3]/div/input    ${home}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[4]/div/input    ${away}
+    ...    AND    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${position}]/td[5]/div/input    ${draw}
+    ...    AND    Click Element    xpath=//*[@id="root"]//button[@class='icon-save']
+    ...    AND    Check Warning Message    The recommend odds is already existed. Please add another one!
+
+Edit Bet type odds
+    [Arguments]    ${bettype}    ${goal}    ${home}    ${away}    ${draw}    ${new_team}
+    ...    ${new_goalodd}    ${new_homeodd}    ${new_awayodd}    ${new_drawodd}    ${action}
+    Reload Page
+    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr/td[1]
+    ${count}    Run Keyword If    '${status}'== 'True'    Get Matching Xpath Count    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr/td[1]
+    : FOR    ${i}    IN RANGE    1    ${count} + 1
+    \    ${get_bettype}    get text    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr[${i}]/td[1]
+    \    Run Keyword If    '${get_bettype}' == '${bettype}' and '${action}' == 'Save'    Run Keywords    Compare Odd Of Bettype    ${bettype}    ${goal}
+    \    ...    ${home}    ${away}    ${draw}    ${i}
+    \    ...    AND    Click Element    xpath=//*[@id="root"]//tr[${i}]//button[@class='icon-edit']
+    \    ...    AND    Edit Odds    ${bettype}    ${new_team}    ${new_goalodd}
+    \    ...    ${new_homeodd}    ${new_awayodd}    ${new_drawodd}    ${action}    ${i}
+    \    Run Keyword If    '${get_bettype}' == '${bettype}' and '${action}' == 'Cancel'    Run Keywords    Compare Odd Of Bettype    ${bettype}    ${goal}
+    \    ...    ${home}    ${away}    ${draw}    ${i}
+    \    ...    AND    Click Element    xpath=//*[@id="root"]//tr[${i}]//button[@class='icon-edit']
+    \    ...    AND    Edit Odds    ${bettype}    ${new_team}    ${new_goalodd}
+    \    ...    ${new_homeodd}    ${new_awayodd}    ${new_drawodd}    ${action}    ${i}
+    Sleep    3s
+
+Select Team To Edit
+    [Arguments]    ${team}
+    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[2]/table/tbody/tr/td[2]/div[1]/div/div/div[1]
+    : FOR    ${i}    IN RANGE    0    2
+    \    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="react-select-10-option-${i}"]
+    \    ${item}    Run Keyword If    '${status}'=='True'    Get Text    xpath=//*[@id="react-select-10-option-${i}"]
+    \    Run Keyword If    '${item}'=='${team}'    Run Keywords    Click Element    xpath=//*[@id="react-select-10-option-${i}"]
+    \    ...    AND    Exit For Loop

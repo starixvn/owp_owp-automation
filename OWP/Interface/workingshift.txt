@@ -1,0 +1,27 @@
+*** Variables ***
+${timezone_setting}    xpath=//*[@id="settingTimeZoneDropdown"]
+@{section_itemlist}    Check All    Admin Assist    Automation    B2C    Basketball    Credit CSD    Cricket
+...               Esports    EST    Fraud & Keyscore    Licensee CSD    Live Assistant    Live Assistant-PH    Live Trading
+...               Live Trading-PH    LST    Management    OPS Admin    OSST    Other Sports    PH PH-Site
+...               PH VN-Site    PM    PO    Pre-Match    Risk & Support    Supportive    Virtual Team
+...               None
+@{category_itemlist}    Check All    Expat    Local    None
+@{location_itemlist}    Check All    CTI    SMS    WAH HCMC    WAH MAL    WAH MNL    None
+${shift_setting}    xpath=//*[@id="sticky-filter"]/div/div[1]/div[2]/div
+${shift_txt}      xpath=//*[@id="first_name2"]
+${icon_addshift}    xpath=//*[@id="sticky-filter"]/div/div[1]/div[3]/div[1]/div[3]/a[1]/i
+${shift_assign_txt}    xpath=//*[@id="jssortable"]/div[2]/div[2]//div[3]/input
+${search}         xpath=//*[@id="sticky-filter"]//a[contains(text(),'Search')]
+${ordermode}      xpath=//*[@id="sticky-filter"]/div/div[2]/div/div[1]/div/label/span
+${upload_btn}     xpath=//*[@id="btn-open-upload"]
+${validate_btn}    xpath=//*[@id="btn-validate-upload"]
+${upload_cfirm}    xpath=//*[@id="btn-confirm-upload"]
+${file_upload}    F:/Working/Automation/Internal/OWP/WS.xlsx
+@{header_list}    Staff    Group    Level    Note    Shift    12P    1P
+...               2P    3P    4P    5P    6P    7P    8P
+...               9P    10P    11P    0A    1A    2A    3A
+...               4A    5A    6A    7A    8A    9A    10A
+...               11A
+@{department_itemlist}    Check All    AUTOMATION    B2C    BASKETBALL    CASINO & EXTERNAL    CREDIT    CRICKET
+...               ESPORTS    GO    LICENSEE    OTHER SPORTS    OTHERS    POOL HOUSE    R&D
+...               SOCCER    SUPPORT & VR    None

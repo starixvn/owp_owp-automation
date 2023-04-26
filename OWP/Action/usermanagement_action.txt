@@ -1,0 +1,651 @@
+*** Settings ***
+Resource          ../Interface/Usermagement.txt
+Library           Collections
+Library           ExtendedSelenium2Library
+Resource          common.txt
+Library           DatabaseLibrary
+
+*** Variables ***
+@{department_list}    All    AUTOMATION    B2C    BASKETBALL    CASINO & EXTERNAL    CREDIT    CRICKET
+...               ESPORTS    GO    LICENSEE    OTHER SPORTS    OTHERS    POOL HOUSE    R&D
+...               SOCCER    SUPPORT & VR    None    # Exptected List
+@{section_list}    All    Automation    B2C    Basketball    Credit CSD    Cricket    Esports
+...               EST    Fraud & Keyscore    Licensee CSD    Live Assistant-PH    Live Assistant-VN    Live Trading-PH    Live Trading-VN
+...               LST    Management    OPS Admin    OSST    Other Sports    PH PH-Site    PH VN-Site
+...               PM    PO    Pre-Match    R&D CSD    Risk & Support    Supportive    Virtual Team
+...               None
+@{role_list}      Staff    Assistant Leader    Leader    Supervisor    Section Head    Management    None
+@{category_list}    Expat    Local    None
+@{location_list}    CTI    SMS    WAH HCMC    WAH MAL    WAH MNL    None
+@{level_list}     A    A+    B    B+    C    ${EMPTY}
+@{pickup_list}    Yes    No    ${EMPTY}
+@{secondacc_list}    Yes    No
+@{group_list}     C_LG    C_LG (Special Team)    C_LG (Support Team)    S_LG    S_LG (Special Team)    SUPPORT TEAM    ${EMPTY}
+@{language_list}    CN    EN    VN
+
+*** Keywords ***
+Verify Filter Label
+    [Arguments]    ${user}    ${role}    ${section}    ${department}    ${category}    ${location}
+    [Documentation]    - Purpose: Check Filter Label
+    ...    - Created by: Martin
+    @{filterlist}    Create List    ${user}    ${role}    ${section}    ${department}    ${category}
+    ...    ${location}
+    @{filterlabel}    Create List
+    : FOR    ${i}    IN RANGE    1    7
+    \    ${text}    Get Text    xpath=//div[1]/form/div/div[${i}]/div[1]
+    \    Append To List    ${filterlabel}    ${text}
+    Sort List    ${filterlist}
+    Sort List    ${filterlabel}
+    Should Be Equal    ${filterlist}    ${filterlabel}
+
+Select Filter And Search
+    [Arguments]    ${user}=${EMPTY}    ${role}=${EMPTY}    ${section}=${EMPTY}    ${department}=${EMPTY}    ${category}=${EMPTY}    ${location}=${EMPTY}
+    ...    ${action}=${EMPTY}
+    [Documentation]    - Purpose: Select filter and Search
+    ...    - Created by: Martin
+    Wait Until Element Is Visible    ${user_txt}    timeout=10s
+    Run Keyword Unless    '${user}'=='${EMPTY}'    Input Text    ${user_txt}    ${user}
+    Run Keyword Unless    '${role}'=='${EMPTY}'    Select Filter    2    ${role}
+    Run Keyword Unless    '${section}'=='${EMPTY}'    Select Filter    3    ${section}
+    Run Keyword Unless    '${department}'=='${EMPTY}'    Select Filter    4    ${department}
+    Run Keyword Unless    '${category}'=='${EMPTY}'    Select Filter    5    ${category}
+    Run Keyword Unless    '${location}'=='${EMPTY}'    Select Filter    6    ${location}
+    Run Keyword If    '${action}'=='Yes'    Click Element    ${search_btn}
+    sleep    2s
+
+Verify By Default Filter
+    [Arguments]    ${role}    ${section}    ${department}    ${category}    ${location}
+    [Documentation]    - Purpose: Verify By-default loading filter
+    ...    - Created by: Martin
+    @{defaultvalue}    Create List
+    @{filterlist}    Create List    ${role}    ${section}    ${department}    ${category}    ${location}
+    : FOR    ${i}    IN RANGE    2    7
+    \    ${text}    Get Value    xpath=//form/div/div[${i}]/div[2]/input
+    \    Append To List    ${defaultvalue}    ${text}
+    Sort List    ${defaultvalue}
+    Sort List    ${filterlist}
+    Should Be Equal    ${defaultvalue}    ${filterlist}
+
+Select Filter
+    [Arguments]    ${position}    ${value}
+    [Documentation]    - Purpose: Select filter by position
+    ...    - Created by: Martin
+    sleep    1s
+    : FOR    ${i}    IN RANGE    ${position}    7
+    \    Click Element    xpath=//form/div/div[${i}]/div[2]/input
+    \    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//form//div[${i}]/div[2]/ul/li/span[contains(text(),'${value}')]
+    \    Run Keyword If    '${status}'=='True'    Run Keywords    Click Element    xpath=//form//div[${i}]/div[2]/ul/li/span[contains(text(),'${value}')]
+    \    ...    AND    Exit For Loop
+
+No Data
+    [Arguments]    ${locator}    ${expected_text}
+    [Documentation]    - Purpose: verify no data return
+    ...    - Created by: Martin
+    Wait Until Element Is Visible    ${locator}    timeout=10s
+    ${text}    Get Text    ${locator}
+    Log    ${text}
+    Should Be Equal    ${text}    ${expected_text}
+
+Verify Single User
+    [Arguments]    ${user}    ${role}    ${section}    ${department}    ${category}    ${location}
+    [Documentation]    - Purpose: Verify data result after filtering with condition
+    ...    - Created by: Martin
+    @{list_input}    Create List    ${user}    ${role}    ${section}    ${department}    ${category}
+    ...    ${location}
+    @{list_output}    Create List
+    Comment    Wait Until Element Is not Visible    xpath=//*[@id="frozenContent_js-listUsers"]/tbody/tr[7]/td[3]/div[contains(text(),'')]    timeout=30s
+    Wait Until Page Does Not Contain Element    xpath=//*[@id="numberlist"]/li[3]/a    timeout=30s
+    ${accountname}    Get Text    xpath=//*[@id="frozenContent_js-listUsers"]/tbody/tr[1]/td[3]/div[contains(text(),'')]
+    ${status_nickname}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[5]/div/input[1][contains(text(),'')]
+    ${nickname}    Run Keyword If    '${status_nickname}'=='True'    Get Value    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[5]/div/input[1][contains(text(),'')]
+    Run Keyword If    '${user}'=='${accountname}'    Append To List    ${list_output}    ${accountname}
+    Run Keyword If    '${user}'=='${nickname}' and '${accountname}'!='${nickname}'    Append To List    ${list_output}    ${nickname}
+    ${department1}    Get Selected List Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[6]/div/div/select
+    Append To List    ${list_output}    ${department1}
+    ${section1}    Get Selected List Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[7]/div/div/select
+    Append To List    ${list_output}    ${section1}
+    ${role1}    Get Selected List Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[9]/div/div/select
+    Append To List    ${list_output}    ${role1}
+    ${category1}    Get Selected List Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[14]/div/div/select
+    Append To List    ${list_output}    ${category1}
+    Scroll Element Into View    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[19]/div/div/select
+    ${location1}    Get Selected List Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[15]/div/div/select
+    Append To List    ${list_output}    ${location1}
+    Sort List    ${list_input}
+    Sort List    ${list_output}
+    Should Be Equal    ${list_input}    ${list_output}
+
+Verify New User Info
+    [Arguments]    @{expected_info}
+    [Documentation]    - Purpose: Verify new user's info(not yet updated)
+    ...    - Created by: Martin
+    @{infolist}    Create List
+    : FOR    ${i}    IN RANGE    1    21
+    \    ${text}    Run Keyword If    ${i} < 6    Get Text    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div
+    \    Run Keyword Unless    '${text}'=='${NONE}'    Append To List    ${infolist}    ${text}
+    \    ${text}    Run Keyword If    ${i}> 5 and ${i} < 10    Get Selected List Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    Run Keyword Unless    '${text}'=='${NONE}'    Append To List    ${infolist}    ${text}
+    \    ${text}    Run Keyword If    ${i} > 9 and ${i} < 14    Get Text    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div
+    \    Run Keyword Unless    '${text}'=='${NONE}'    Append To List    ${infolist}    ${text}
+    \    Run Keyword If    ${i}==14    Scroll Element Into View    xpath=/html/body/main/div[1]/div[1]/div/div[4]/div/table/tbody/tr[1]/td[20]/div/div/div/button
+    \    ${text}    Run Keyword If    ${i}>13 and ${i} < 18    Get Selected List Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    Run Keyword Unless    '${text}'=='${NONE}'    Append To List    ${infolist}    ${text}
+    \    ${text}    Run Keyword If    ${i}==18    Get Text    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div
+    \    Run Keyword Unless    '${text}'=='${NONE}'    Append To List    ${infolist}    ${text}
+    \    ${text}    Run Keyword If    ${i} == 19    Get Selected List Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    Run Keyword Unless    '${text}'=='${NONE}'    Append To List    ${infolist}    ${text}
+    \    ${text}    Run Keyword If    ${i}==20    Get Text    xpath=/html/body/main/div[1]/div[1]/div/div[4]/div/table/tbody/tr[1]/td[${i}]/div/div/div/button/span
+    \    Run Keyword Unless    '${text}'=='${NONE}'    Append To List    ${infolist}    ${text}
+    Log    ${infolist}
+    Should Be Equal    ${infolist}    ${expected_info}
+    Comment    Scroll Element Into View    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr/td[1]/div
+
+Verify Filter's Items
+    [Arguments]    ${filtername}    @{expectedlist}
+    [Documentation]    - Purpose: Verify filter's items
+    ...    - Created by: Martin
+    : FOR    ${j}    IN RANGE    2    8
+    \    ${text}    Get Text    xpath=//div[1]/form/div/div[${j}]/div[1]
+    \    Run Keyword If    '${filtername}'=='${text}'    Run Keywords    Click Element    xpath=//form/div/div[${j}]/div[2]/input
+    \    ...    AND    Exit For Loop
+    @{itemlist}    Create List
+    : FOR    ${i}    IN RANGE    1    45
+    \    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//form/div/div[${j}]/div[2]/ul/li[${i}]
+    \    ${item}    Run Keyword If    '${status}'=='True'    Get Text    xpath=//form/div/div[${j}]/div[2]/ul/li[${i}]
+    \    Append To List    ${itemlist}    ${item}
+    \    Run Keyword If    '${status}'=='False'    Exit For Loop
+    Log    ${itemlist}
+    Remove Values From List    ${itemlist}    ${NONE}
+    Log    ${itemlist}
+    Should Be Equal    ${itemlist}    @{expectedlist}
+    Sleep    1s
+
+Check Item List
+    [Arguments]    ${department}    ${section}    ${group}    ${role}    ${category}    ${location}
+    ...    ${level}    ${pickup}    ${second}    ${language}
+    [Documentation]    - Purpose: Check Items in Listbox
+    ...    - Created By: Martin
+    @{get_list1}    Create List
+    @{get_list2}    Create List
+    @{get_list3}    Create List
+    @{get_list4}    Create List
+    @{get_list5}    Create List
+    @{get_list6}    Create List
+    @{get_list7}    Create List
+    @{get_list8}    Create List
+    @{get_list9}    Create List
+    # Get current list items from system
+    @{get_list1}    Run Keyword If    '${department}'=='Department'    Get List Items    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[6]/div/div/select
+    @{get_list2}    Run Keyword If    '${section}'=='Section'    Get List Items    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[7]/div/div/select
+    @{get_list3}    Run Keyword If    '${group}'=='Group'    Get List Items    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[8]/div/div/select
+    @{get_list4}    Run Keyword If    '${role}'=='Role'    Get List Items    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[9]/div/div/select
+    @{get_list5}    Run Keyword If    '${category}'=='Category'    Get List Items    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[14]/div/div/select
+    Scroll Element Into View    xpath=/html/body/main/div[1]/div[1]/div/div[4]/div/table/tbody/tr[1]/td[20]/div/div/div/button
+    @{get_list6}    Run Keyword If    '${location}'=='Location'    Get List Items    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[15]/div/div/select
+    @{get_list7}    Run Keyword If    '${level}'=='Level'    Get List Items    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[16]/div/div/select
+    @{get_list8}    Run Keyword If    '${pickup}'=='Pickup'    Get List Items    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[17]/div/div/select
+    @{get_list9}    Run Keyword If    '${second}'=='Second Account'    Get List Items    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[19]/div/div/select
+    # Item list must be same expected list
+    Should Be Equal    ${get_list1}    ${department_list}
+    Should Be Equal    ${get_list2}    ${section_list}
+    Should Be Equal    ${get_list3}    ${group_list}
+    Should Be Equal    ${get_list4}    ${role_list}
+    Should Be Equal    ${get_list5}    ${category_list}
+    Should Be Equal    ${get_list6}    ${location_list}
+    Should Be Equal    ${get_list7}    ${level_list}
+    Should Be Equal    ${get_list8}    ${pickup_list}
+    Should Be Equal    ${get_list9}    ${secondacc_list}
+    Run Keyword If    '${language}'=='Language'    Check Items of Language    ${language_list}
+
+Add New User Info
+    [Arguments]    ${acc}    ${employeeid}    ${fullname}    ${nickname}    ${dept}    ${section}
+    ...    ${group}    ${role}    ${extension}    ${phone}    ${email}    ${skype}
+    ...    ${category}    ${location}    ${level}    ${pickup}    ${address}    ${secondacc}
+    [Documentation]    - Purpose: Add New User Info + Check Validation for Nick Name and Email
+    ...    - Created By: Martin
+    # Verify accountname
+    Wait Until Element Is Visible    xpath=//*[@id="frozenContent_js-listUsers"]/tbody/tr[1]/td[3]/div[contains(text(),'')]
+    ${accname}    Get Text    xpath=//*[@id="frozenContent_js-listUsers"]/tbody/tr[1]/td[3]/div[contains(text(),'')]
+    Should Be Equal    ${accname}    ${acc}
+    # Add new user's info
+    : FOR    ${i}    IN RANGE    2    20
+    \    Run Keyword If    ${i} == 2 and '${employeeid}' != '${EMPTY}'    Run Keywords    Click Element    xpath=//table[@id='frozenContent_js-listUsers']/tbody/tr/td[${i}]/div/a
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id='frozenContent_js-listUsers']/tbody/tr/td[${i}]/div/input[${i}]    timeout=10s
+    \    ...    AND    Input Text    xpath=//table[@id='frozenContent_js-listUsers']/tbody/tr/td[${i}]/div/input[${i}]    ${employeeid}
+    \    ...    AND    Press Key    xpath=//table[@id='frozenContent_js-listUsers']/tbody/tr/td[${i}]/div/input[${i}]    \\13
+    \    Run Keyword If    '${i}'=='4' and '${fullname}' != '${EMPTY}'    Run Keywords    Click Element    xpath=//table[@id='tblContent_js-listUsers']/tbody/tr/td[${i}]/div/a
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    timeout=10s
+    \    ...    AND    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    ${fullname}
+    \    ...    AND    Press Key    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    \\13
+    \    Run Keyword If    '${i}'=='5' and '${nickname}' != '${EMPTY}'    Run Keywords    Click Element    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/a
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    timeout=10s
+    \    ...    AND    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    ${nickname}
+    \    ...    AND    Press Key    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    \\13
+    \    ...    AND    Validate Data Input And Correct Data    Nick Name    ${i}    ${nickname}
+    \    Run Keyword If    '${i}'=='6' and '${dept}' != '${EMPTY}'    Run Keywords    Click Element    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    ...    AND    Select From List By Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select    ${dept}
+    \    Run Keyword If    '${i}'=='7' and '${section}' != '${EMPTY}'    Run Keywords    Click Element    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    ...    AND    Select From List By Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select    ${section}
+    \    Run Keyword If    '${i}'=='8' and '${group}' != '${EMPTY}'    Run Keywords    Click Element    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    ...    AND    Select From List By Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select    ${group}
+    \    Run Keyword If    '${i}'=='9' and '${role}' != '${EMPTY}'    Run Keywords    Click Element    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    ...    AND    Select From List By Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select    ${role}
+    \    Run Keyword If    '${i}'=='10' and '${extension}' != '${EMPTY}'    Run Keywords    Click Element    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/a
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    timeout=10s
+    \    ...    AND    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    ${extension}
+    \    ...    AND    Press Key    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    \\13
+    \    Run Keyword If    '${i}'=='11' and '${phone}' != '${EMPTY}'    Run Keywords    Click Element    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/a
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    timeout=10s
+    \    ...    AND    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    ${phone}
+    \    ...    AND    Press Key    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    \\13
+    \    Run Keyword If    '${i}'=='12' and '${email}' != '${EMPTY}'    Run Keywords    Click Element    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/a
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    timeout=10s
+    \    ...    AND    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    ${email}
+    \    ...    AND    Press Key    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    \\13
+    \    ...    AND    Validate Data Input And Correct Data    Email    ${i}    ${email}
+    \    Run Keyword If    '${i}'=='13' and '${skype}' != '${EMPTY}'    Run Keywords    Click Element    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/a
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    timeout=10s
+    \    ...    AND    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    ${skype}
+    \    ...    AND    Press Key    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    \\13
+    \    Run Keyword If    '${i}'=='14' and '${category}' != '${EMPTY}'    Run Keywords    Click Element    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    ...    AND    Select From List By Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select    ${category}
+    \    ...    AND    Scroll Element Into View    xpath=/html/body/main/div[1]/div[1]/div/div[4]/div/table/tbody/tr[1]/td[20]/div/div/div/button
+    \    Run Keyword If    '${i}'=='15' and '${location}' != '${EMPTY}'    Run Keywords    Click Element    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    ...    AND    Select From List By Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select    ${location}
+    \    Run Keyword If    '${i}'=='16' and '${level}' != '${EMPTY}'    Run Keywords    Click Element    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    ...    AND    Select From List By Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select    ${level}
+    \    Run Keyword If    '${i}'=='17' and '${pickup}' != '${EMPTY}'    Run Keywords    Click Element    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    ...    AND    Select From List By Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select    ${pickup}
+    \    Run Keyword If    '${i}'=='18' and '${address}' != '${EMPTY}'    Run Keywords    Click Element    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/a
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    timeout=10s
+    \    ...    AND    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    ${address}
+    \    ...    AND    Press Key    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    \\13
+    \    Run Keyword If    '${i}'=='19' and '${secondacc}' != '${EMPTY}'    Run Keywords    Click Element    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    ...    AND    Select From List By Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select    ${secondacc}
+
+Edit User Info
+    [Arguments]    ${acc}    ${employeeid}    ${fullname}    ${nickname}    ${dept}    ${section}
+    ...    ${group}    ${role}    ${extension}    ${phone}    ${email}    ${skype}
+    ...    ${category}    ${location}    ${level}    ${pickup}    ${address}    ${secondacc}
+    [Documentation]    - Purpose: Edit Existing User Info
+    ...    - Created By: Martin
+    # Verify accountname
+    Wait Until Element Is Visible    xpath=//*[@id="frozenContent_js-listUsers"]/tbody/tr[1]/td[3]/div[contains(text(),'')]
+    ${accname}    Get Text    xpath=//*[@id="frozenContent_js-listUsers"]/tbody/tr[1]/td[3]/div[contains(text(),'')]
+    Should Be Equal    ${accname}    ${acc}
+    # Edit new user's info
+    : FOR    ${i}    IN RANGE    2    20
+    \    Run Keyword If    ${i} == 2    Run Keywords    Click Element    xpath=//table[@id='frozenContent_js-listUsers']/tbody/tr/td[${i}]/div/input[1]
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id='frozenContent_js-listUsers']/tbody/tr/td[${i}]/div/input[2]    timeout=10s
+    \    ...    AND    Run Keyword And Ignore Error    Input Text    xpath=//table[@id='frozenContent_js-listUsers']/tbody/tr/td[${i}]/div/input[2]    ${employeeid}
+    \    ...    AND    Click Element    xpath=//table[@id='frozenContent_js-listUsers']/tbody/tr/td[${i}]/div/a
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id='frozenContent_js-listUsers']/tbody/tr/td[${i}]/div/input[${i}]    timeout=10s
+    \    ...    AND    Input Text    xpath=//table[@id='frozenContent_js-listUsers']/tbody/tr/td[${i}]/div/input[${i}]    ${employeeid}
+    \    ...    AND    Press Key    xpath=//table[@id='frozenContent_js-listUsers']/tbody/tr/td[${i}]/div/input[${i}]    \\13
+    \    Run Keyword If    ${i}==4    Run Keywords    Click Element    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[1]
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    timeout=10s
+    \    ...    AND    Run Keyword And Ignore Error    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    ${fullname}
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id='tblContent_js-listUsers']/tbody/tr/td[${i}]/div/a    timeout=10s
+    \    ...    AND    Click Element    xpath=//table[@id='tblContent_js-listUsers']/tbody/tr/td[${i}]/div/a
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    timeout=10s
+    \    ...    AND    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    ${fullname}
+    \    ...    AND    Press Key    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    \\13
+    \    Run Keyword If    '${i}'=='5'    Run Keywords    Click Element    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[1]
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    timeout=10s
+    \    ...    AND    Run Keyword And Ignore Error    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    ${nickname}
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id='tblContent_js-listUsers']/tbody/tr/td[${i}]/div/a    timeout=10s
+    \    ...    AND    Click Element    xpath=//table[@id='tblContent_js-listUsers']/tbody/tr/td[${i}]/div/a
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    timeout=10s
+    \    ...    AND    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    ${nickname}
+    \    ...    AND    Press Key    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    \\13    #AND
+    \    ...    # Validate Data Input And Correct Data    Nick Name    ${i}    ${nickname}
+    \    Run Keyword If    '${i}'=='6'    Run Keywords    Click Element    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    ...    AND    Select From List By Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select    ${dept}
+    \    Run Keyword If    '${i}'=='7'    Run Keywords    Click Element    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    ...    AND    Select From List By Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select    ${section}
+    \    Run Keyword If    '${i}'=='8'    Run Keywords    Click Element    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    ...    AND    Select From List By Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select    ${group}
+    \    Run Keyword If    '${i}'=='9'    Run Keywords    Click Element    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    ...    AND    Select From List By Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select    ${role}
+    \    Run Keyword If    '${i}'=='10'    Run Keywords    Click Element    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[1]
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    timeout=10s
+    \    ...    AND    Run Keyword And Ignore Error    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    ${extension}
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id='tblContent_js-listUsers']/tbody/tr/td[${i}]/div/a    timeout=10s
+    \    ...    AND    Click Element    xpath=//table[@id='tblContent_js-listUsers']/tbody/tr/td[${i}]/div/a
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    timeout=10s
+    \    ...    AND    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    ${extension}
+    \    ...    AND    Press Key    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    \\13
+    \    Run Keyword If    '${i}'=='11'    Run Keywords    Click Element    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[1]
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    timeout=10s
+    \    ...    AND    Run Keyword And Ignore Error    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    ${phone}
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id='tblContent_js-listUsers']/tbody/tr/td[${i}]/div/a    timeout=10s
+    \    ...    AND    Click Element    xpath=//table[@id='tblContent_js-listUsers']/tbody/tr/td[${i}]/div/a
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    timeout=10s
+    \    ...    AND    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    ${phone}
+    \    ...    AND    Press Key    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    \\13
+    \    Run Keyword If    '${i}'=='12'    Run Keywords    Click Element    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[1]
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    timeout=10s
+    \    ...    AND    Run Keyword And Ignore Error    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    ${email}
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id='tblContent_js-listUsers']/tbody/tr/td[${i}]/div/a    timeout=10s
+    \    ...    AND    Click Element    xpath=//table[@id='tblContent_js-listUsers']/tbody/tr/td[${i}]/div/a
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    timeout=10s
+    \    ...    AND    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    ${email}
+    \    ...    AND    Press Key    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    \\13    #AND
+    \    ...    # Validate Data Input And Correct Data    Email    ${i}    ${email}
+    \    Run Keyword If    '${i}'=='13'    Run Keywords    Click Element    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[1]
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    timeout=10s
+    \    ...    AND    Run Keyword And Ignore Error    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    ${skype}
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id='tblContent_js-listUsers']/tbody/tr/td[${i}]/div/a    timeout=10s
+    \    ...    AND    Click Element    xpath=//table[@id='tblContent_js-listUsers']/tbody/tr/td[${i}]/div/a
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    timeout=10s
+    \    ...    AND    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    ${skype}
+    \    ...    AND    Press Key    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    \\13
+    \    Run Keyword If    '${i}'=='14'    Run Keywords    Click Element    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    ...    AND    Select From List By Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select    ${category}
+    \    ...    AND    Scroll Element Into View    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr/td[19]/div/div/select
+    \    Run Keyword If    '${i}'=='15'    Run Keywords    Click Element    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    ...    AND    Select From List By Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select    ${location}
+    \    Run Keyword If    '${i}'=='16'    Run Keywords    Click Element    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    ...    AND    Select From List By Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select    ${level}
+    \    Run Keyword If    '${i}'=='17'    Run Keywords    Click Element    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    ...    AND    Select From List By Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select    ${pickup}
+    \    Run Keyword If    '${i}'=='18'    Run Keywords    Click Element    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[1]
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    timeout=10s
+    \    ...    AND    Run Keyword And Ignore Error    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    ${address}
+    \    ...    AND    Click Element    xpath=//table[@id='tblContent_js-listUsers']/tbody/tr/td[${i}]/div/a
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    timeout=10s
+    \    ...    AND    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    ${address}
+    \    ...    AND    Press Key    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    \\13
+    \    Run Keyword If    '${i}'=='19'    Run Keywords    Click Element    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    ...    AND    Select From List By Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select    ${secondacc}
+
+Verify User Info After Updating
+    [Arguments]    ${acc}    @{expected_info}
+    [Documentation]    - Purpose: Verify User Info After Updating
+    ...    - Created By: Martin
+    # Verify accountname
+    Wait Until Element Is Visible    xpath=//*[@id="frozenContent_js-listUsers"]/tbody/tr[1]/td[3]/div[contains(text(),'')]
+    ${accname}    Get Text    xpath=//*[@id="frozenContent_js-listUsers"]/tbody/tr[1]/td[3]/div[contains(text(),'')]
+    Should Be Equal    ${accname}    ${acc}
+    # Get user's info
+    @{infolist}    Create List
+    : FOR    ${i}    IN RANGE    2    20
+    \    ${text}    Run Keyword If    ${i} == 2    Get Value    xpath=//table[@id='frozenContent_js-listUsers']/tbody/tr/td[${i}]/div/input[1]
+    \    Run Keyword Unless    '${text}'=='${NONE}'    Append To List    ${infolist}    ${text}
+    \    ${text}    Run Keyword If    ${i}==4    Get Value    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[1]
+    \    Run Keyword Unless    '${text}'=='${NONE}'    Append To List    ${infolist}    ${text}
+    \    ${text}    Run Keyword If    '${i}'=='5'    Get Value    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[1]
+    \    Run Keyword Unless    '${text}'=='${NONE}'    Append To List    ${infolist}    ${text}
+    \    ${text}    Run Keyword If    ${i}> 5 and ${i} < 10    Get Selected List Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    Run Keyword Unless    '${text}'=='${NONE}'    Append To List    ${infolist}    ${text}
+    \    ${text}    Run Keyword If    ${i} > 9 and ${i} < 14    Get Value    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[1]
+    \    Run Keyword Unless    '${text}'=='${NONE}'    Append To List    ${infolist}    ${text}
+    \    Run Keyword If    ${i}==14    Scroll Element Into View    xpath=/html/body/main/div[1]/div[1]/div/div[4]/div/table/tbody/tr[1]/td[20]/div/div/div/button
+    \    ${text}    Run Keyword If    ${i}>13 and ${i} < 18    Get Selected List Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    Run Keyword Unless    '${text}'=='${NONE}'    Append To List    ${infolist}    ${text}
+    \    ${text}    Run Keyword If    ${i}==18    Get Value    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[1]
+    \    Run Keyword Unless    '${text}'=='${NONE}'    Append To List    ${infolist}    ${text}
+    \    ${text}    Run Keyword If    ${i} == 19    Get Selected List Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    Run Keyword Unless    '${text}'=='${NONE}'    Append To List    ${infolist}    ${text}
+    Log    ${infolist}
+    Should Be Equal    ${infolist}    ${expected_info}
+
+Clear User Info
+    [Arguments]    ${acc}    ${employeeid}=${EMPTY}    ${fullname}=${EMPTY}    ${nickname}=${EMPTY}    ${dept}=${EMPTY}    ${section}=${EMPTY}
+    ...    ${group}=${EMPTY}    ${role}=${EMPTY}    ${extension}=${EMPTY}    ${phone}=${EMPTY}    ${email}=${EMPTY}    ${skype}=${EMPTY}
+    ...    ${category}=${EMPTY}    ${location}=${EMPTY}    ${level}=${EMPTY}    ${pickup}=${EMPTY}    ${address}=${EMPTY}    ${secondacc}=No
+    [Documentation]    - Purpose: Clear User Info
+    ...    - Created By: Martin
+    Navigate To Menu    User Management
+    Sleep    1s
+    Select Filter And Search    ${acc}    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}
+    ...    Yes
+    # Verify accountname
+    Wait Until Element Is Visible    xpath=//*[@id="frozenContent_js-listUsers"]/tbody/tr[1]/td[3]/div[contains(text(),'')]
+    ${accname}    Get Text    xpath=//*[@id="frozenContent_js-listUsers"]/tbody/tr[1]/td[3]/div[contains(text(),'')]
+    Should Be Equal    ${accname}    ${acc}
+    # Edit new user's info
+    : FOR    ${i}    IN RANGE    2    20
+    \    Run Keyword If    ${i} == 2    Run Keywords    Click Element    xpath=//table[@id='frozenContent_js-listUsers']/tbody/tr/td[${i}]/div/input[1]
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id='frozenContent_js-listUsers']/tbody/tr/td[${i}]/div/input[2]    timeout=10s
+    \    ...    AND    Run Keyword And Ignore Error    Input Text    xpath=//table[@id='frozenContent_js-listUsers']/tbody/tr/td[${i}]/div/input[2]    ${employeeid}
+    \    Run Keyword If    ${i}==4    Run Keywords    Click Element    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[1]
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    timeout=10s
+    \    ...    AND    Run Keyword And Ignore Error    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    ${fullname}
+    \    Run Keyword If    '${i}'=='5'    Run Keywords    Click Element    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[1]
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    timeout=10s
+    \    ...    AND    Run Keyword And Ignore Error    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    ${nickname}
+    \    Run Keyword If    '${i}'=='6'    Run Keywords    Click Element    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    ...    AND    Select From List By Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select    ${dept}
+    \    Run Keyword If    '${i}'=='7'    Run Keywords    Click Element    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    ...    AND    Select From List By Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select    ${section}
+    \    Run Keyword If    '${i}'=='8'    Run Keywords    Click Element    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    ...    AND    Select From List By Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select    ${group}
+    \    Run Keyword If    '${i}'=='9'    Run Keywords    Click Element    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    ...    AND    Select From List By Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select    ${role}
+    \    Run Keyword If    '${i}'=='10'    Run Keywords    Click Element    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[1]
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    timeout=10s
+    \    ...    AND    Run Keyword And Ignore Error    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    ${extension}
+    \    Run Keyword If    '${i}'=='11'    Run Keywords    Click Element    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[1]
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    timeout=10s
+    \    ...    AND    Run Keyword And Ignore Error    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    ${phone}
+    \    Run Keyword If    '${i}'=='12'    Run Keywords    Click Element    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[1]
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    timeout=10s
+    \    ...    AND    Run Keyword And Ignore Error    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    ${email}
+    \    Run Keyword If    '${i}'=='13'    Run Keywords    Click Element    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[1]
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    timeout=10s
+    \    ...    AND    Run Keyword And Ignore Error    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    ${skype}
+    \    Run Keyword If    '${i}'=='14'    Run Keywords    Click Element    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    ...    AND    Select From List By Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select    ${category}
+    \    ...    AND    Scroll Element Into View    xpath=/html/body/main/div[1]/div[1]/div/div[4]/div/table/tbody/tr[1]/td[20]/div/div/div/button
+    \    Run Keyword If    '${i}'=='15'    Run Keywords    Click Element    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    ...    AND    Select From List By Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select    ${location}
+    \    Run Keyword If    '${i}'=='16'    Run Keywords    Click Element    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    ...    AND    Select From List By Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select    ${level}
+    \    Run Keyword If    '${i}'=='17'    Run Keywords    Click Element    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    ...    AND    Select From List By Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select    ${pickup}
+    \    Run Keyword If    '${i}'=='18'    Run Keywords    Click Element    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[1]
+    \    ...    AND    Wait Until Element Is Visible    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    timeout=10s
+    \    ...    AND    Run Keyword And Ignore Error    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[2]    ${address}
+    \    Run Keyword If    '${i}'=='19'    Run Keywords    Click Element    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select
+    \    ...    AND    Select From List By Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div/div/select    ${secondacc}
+    Select Language    CN    EN    VN
+
+Verify Single User_xtest
+    [Arguments]    ${user}    ${role}    ${section}    ${department}    ${category}    ${location}
+    [Documentation]    - Purpose: Verify data result after filtering with condition
+    ...    - Created by: Martin
+    @{list_input}    Create List    ${user}    ${role}    ${section}    ${department}    ${category}
+    ...    ${location}
+    @{list_output}    Create List
+    Comment    Wait Until Element Is Not Visible    xpath=//*[@id="frozenContent_js-listUsers"]/tbody/tr[7]/td[3]/div[contains(text(),'')]    timeout=10s
+    Wait Until Page Does Not Contain Element    xpath=//*[@id="numberlist"]/li[3]/a    timeout=30s
+    ${accountname}    Get Text    xpath=//*[@id="frozenContent_js-listUsers"]/tbody/tr[1]/td[3]/div[contains(text(),'')]
+    ${status_nickname}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[5]/div/input[1][contains(text(),'')]
+    ${nickname}    Run Keyword If    '${status_nickname}'=='True'    Get Value    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[5]/div/input[1][contains(text(),'')]
+    Run Keyword If    '${user}'=='${accountname}'    Append To List    ${list_output}    ${accountname}
+    Run Keyword If    '${user}'=='${nickname}' and '${accountname}'!='${nickname}'    Append To List    ${list_output}    ${nickname}
+    ${role1}    Run Keyword Unless    '${role}'=='${Empty}'    Get Selected List Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[9]/div/div/select
+    Run Keyword Unless    '${role}'=='${Empty}'    Append To List    ${list_output}    ${role1}
+    ${section1}    Run Keyword Unless    '${section}'=='${EMPTY}'    Get Selected List Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[7]/div/div/select
+    Run Keyword Unless    '${section}'=='${EMPTY}'    Append To List    ${list_output}    ${section1}
+    ${department1}    Run Keyword Unless    '${department}'=='${EMPTY}'    Get Selected List Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[6]/div/div/select
+    Run Keyword Unless    '${department}'=='${EMPTY}'    Append To List    ${list_output}    ${department1}
+    ${category1}    Run Keyword Unless    '${category}'=='${EMPTY}'    Get Selected List Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[14]/div/div/select
+    Run Keyword Unless    '${category}'=='${EMPTY}'    Append To List    ${list_output}    ${category1}
+    Scroll Element Into View    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[19]/div/div/select
+    ${location1}    Run Keyword Unless    '${location}'=='${EMPTY}'    Get Selected List Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[15]/div/div/select
+    Run Keyword Unless    '${location}'=='${EMPTY}'    Append To List    ${list_output}    ${location1}
+    Remove Values From List    ${list_input}    ${EMPTY}
+    Sort List    ${list_input}
+    Sort List    ${list_output}
+    Should Be Equal    ${list_input}    ${list_output}
+
+Validate Data Input And Correct Data
+    [Arguments]    ${field_name}    ${position}    ${data}
+    [Documentation]    - Purpose: Check Validation For Fields (Require right format)
+    ...    - Created By: Martin
+    ${alert_status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="swal2-content"]
+    Run Keyword If    '${alert_status}'=='True' and '${field_name}' == 'Nick Name'    Run keywords    Get Alert    Nickname cannot contain a space
+    ...    AND    Correct Data Input    ${position}    ${data}
+    Run Keyword If    '${alert_status}'=='True' and '${field_name}' =='Email'    Run keywords    Get Alert    The format email is invalid
+    ...    AND    Correct Data Input    ${position}    ${data}
+
+Get Alert
+    [Arguments]    ${expected_alert}
+    [Documentation]    - Purpose: Get Warning Message and Validate Message
+    ...    - Created By: Martin
+    ${content}    Get Text    xpath=//*[@id="swal2-content"]
+    Should Be Equal    ${expected_alert}    ${content}
+    Wait Until Element Is Visible    xpath=/html//button[contains(text(),'OK')]
+    Click Element    xpath=/html//button[contains(text(),'OK')]
+
+Correct Data Input
+    [Arguments]    ${position}    ${data}
+    ${valid_nickname}    Replace String    ${data}    ${SPACE}    ${EMPTY}
+    ${email}    Replace String    ${data}    ${SPACE}    ${EMPTY}
+    ${correct_email}    Set Variable    ${email}@gmail.com
+    Run Keyword If    '${position}'=='5'    Run Keywords    Click Element    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${position}]/div/input[2]
+    ...    AND    Wait Until Element Is Visible    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${position}]/div/input[2]    timeout=20s
+    ...    AND    Run Keyword And Ignore Error    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${position}]/div/input[2]    ${valid_nickname}
+    ...    AND    Wait Until Element Is Visible    xpath=//table[@id='tblContent_js-listUsers']/tbody/tr/td[${position}]/div/a
+    ...    AND    Click Element    xpath=//table[@id='tblContent_js-listUsers']/tbody/tr/td[${position}]/div/a
+    ...    AND    Wait Until Element Is Visible    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${position}]/div/input[2]    timeout=10s
+    ...    AND    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${position}]/div/input[2]    ${valid_nickname}
+    ...    AND    Press Key    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${position}]/div/input[2]    \\13
+    Comment    Run Keyword If    '${position}'=='12'    Run Keywords    Click Element    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${position}]/div/input[2]
+    ...    AND    Run Keyword And Ignore Error    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${position}]/div/input[2]    ${correct_email}
+    ...    AND    Press Key    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${position}]/div/input[2]    \\13
+    Run Keyword If    '${position}'=='12'    Run Keywords    Click Element    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${position}]/div/input[2]
+    ...    AND    Wait Until Element Is Visible    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${position}]/div/input[2]    timeout=20s
+    ...    AND    Run Keyword And Ignore Error    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${position}]/div/input[2]    ${correct_email}
+    ...    AND    Wait Until Element Is Visible    xpath=//table[@id='tblContent_js-listUsers']/tbody/tr/td[${position}]/div/a
+    ...    AND    Click Element    xpath=//table[@id='tblContent_js-listUsers']/tbody/tr/td[${position}]/div/a
+    ...    AND    Wait Until Element Is Visible    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${position}]/div/input[2]    timeout=10s
+    ...    AND    Input Text    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${position}]/div/input[2]    ${correct_email}
+    ...    AND    Press Key    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${position}]/div/input[2]    \\13
+
+Verify Multiple Data Result
+    [Arguments]    ${role}=${EMPTY}    ${section}=${EMPTY}    ${department}=${EMPTY}    ${category}=${EMPTY}    ${location}=${EMPTY}
+    [Documentation]    - Purpose: Verify data after filtering without username
+    ...    - Created By: Martin
+    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="frozenContent_js-listUsers"]/tbody/tr/td[1]/div
+    ${count}    Run keyword If    '${status}'=='True'    Get Matching Xpath Count    xpath=//*[@id="frozenContent_js-listUsers"]/tbody/tr/td[1]/div
+    Log    ${count}
+    Connect to database
+    ${record}    Query    exec OWP_UserListGet @RoleId=1,@SectionId=2,@SiteId=99
+    Log    ${record}
+    ${leng}    Get Length    ${record}
+    Disconnect From Database
+    Page Should Contain    ${leng} entries
+    : FOR    ${i}    IN RANGE    1    ${count} + 1
+    \    ${role1}    Run Keyword Unless    '${role}'=='${Empty}'    Get Selected List Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[${i}]/td[9]/div/div/select
+    \    Run Keyword Unless    '${role}'=='${Empty}'    Should Be Equal    ${role}    ${role1}
+    \    ${section1}    Run Keyword Unless    '${section}'=='${EMPTY}'    Get Selected List Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[${i}]/td[7]/div/div/select
+    \    Run Keyword Unless    '${section}'=='${EMPTY}'    Should Be Equal    ${section}    ${section1}
+    \    ${department1}    Run Keyword Unless    '${department}'=='${EMPTY}'    Get Selected List Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[${i}]/td[6]/div/div/select
+    \    Run Keyword Unless    '${department}'=='${EMPTY}'    Should Be Equal    ${department}    ${department1}
+    \    ${category1}    Run Keyword Unless    '${category}'=='${EMPTY}'    Get Selected List Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[${i}]/td[14]/div/div/select
+    \    Run Keyword Unless    '${category}'=='${EMPTY}'    Should Be Equal    ${category}    ${category1}
+    \    ${location1}    Run Keyword Unless    '${location}'=='${EMPTY}'    Get Selected List Label    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[${i}]/td[15]/div/div/select
+    \    Run Keyword Unless    '${location}'=='${EMPTY}'    Should Be Equal    ${location}    ${location1}
+    \    Log    ${i}
+    Comment    Run Keyword Unless    '${pagesize}'=='${EMPTY}'    Page Should Contain    Showing 1 to ${count} + ${pagesize}
+    ...    ELSE    Page Should Contain    Showing 1 to ${count}
+
+Check Returning Data
+    [Arguments]    ${role}=${EMPTY}    ${section}=${EMPTY}    ${department}=${EMPTY}    ${category}=${EMPTY}    ${location}=${EMPTY}
+    [Documentation]    - Purpose: Verify Returing data after filtering
+    ...    - Created By: Martin
+    ${status_result}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr/td[2]/div[contains(text(),'')]
+    Run Keyword If    '${status_result}'=='False'    No Data    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr/td[2]/div[contains(text(),'')]    There is no data
+    ...    ELSE    Run Keyword    Verify Multiple Data Result    ${role}    ${section}    ${department}
+    ...    ${category}    ${location}
+
+Check Paging and Verify Data
+    [Arguments]    ${role}=${EMPTY}    ${section}=${EMPTY}    ${department}=${EMPTY}    ${category}=${EMPTY}    ${location}=${EMPTY}
+    ${num_count}    Count Result Data
+    : FOR    ${i}    IN RANGE    3    20
+    \    ${status_paging}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="numberlist"]/li[${i}]/a
+    \    Run Keyword If    '${status_paging}'=='True'    Run Keywords    Click Element    xpath=//*[@id="numberlist"]/li[${i}]/a
+    \    ...    AND    Verify Multiple Data Result    ${role}    ${section}    ${department}
+    \    ...    ${category}    ${location}
+    \    Run Keyword Unless    '${status_paging}'=='True'    Run keywords    Log    Only 1 record is displaying
+    \    ...    AND    Exit For Loop
+
+Select Page Size
+    [Arguments]    ${value}
+    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=/html/body/main/div[1]/div[2]/div[2]/div/span[2]/div
+    Run Keyword If    '${status}'=='True'    Run keywords    Click Element    xpath=/html/body/main/div[1]/div[2]/div[2]/div/span[2]/div
+    ...    AND    Wait Until Element Is Visible    xpath=//span[2]/div/ul/li/span[contains(text(),'${value}')]    timeout=10s
+    ...    AND    Click Element    xpath=//span[2]/div/ul/li/span[contains(text(),'${value}')]
+
+Count Result Data
+    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="frozenContent_js-listUsers"]/tbody/tr/td[1]/div
+    ${count}    Run keyword If    '${status}'=='True'    Get Matching Xpath Count    xpath=//*[@id="frozenContent_js-listUsers"]/tbody/tr/td[1]/div
+    [Return]    ${count}
+
+Verify User Info_View Permission
+    [Arguments]    ${acc}    @{expected_info}
+    # Verify accountname
+    Wait Until Element Is Visible    xpath=//*[@id="frozenContent_js-listUsers"]/tbody/tr[1]/td[3]/div[contains(text(),'')]
+    ${accname}    Get Text    xpath=//*[@id="frozenContent_js-listUsers"]/tbody/tr[1]/td[3]/div[contains(text(),'')]
+    Should Be Equal    ${accname}    ${acc}
+    # Get user's info
+    @{infolist}    Get User Info
+    Should Be Equal    ${infolist}    ${expected_info}
+
+Get User Info
+    # Get user's info
+    @{infolist}    Create List
+    : FOR    ${i}    IN RANGE    2    20
+    \    ${text}    Run Keyword If    ${i} == 2    Get Value    xpath=//table[@id='frozenContent_js-listUsers']/tbody/tr/td[${i}]/div/input
+    \    Run Keyword Unless    '${text}'=='${NONE}'    Append To List    ${infolist}    ${text}
+    \    ${text}    Run Keyword If    ${i} == 3    Get Text    xpath=//table[@id='frozenContent_js-listUsers']/tbody/tr/td[${i}]/div[contains(text(),'')]
+    \    Run Keyword Unless    '${text}'=='${NONE}'    Append To List    ${infolist}    ${text}
+    \    ${text}    Run Keyword If    ${i}==4    Get Value    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[1]
+    \    Run Keyword Unless    '${text}'=='${NONE}'    Append To List    ${infolist}    ${text}
+    \    ${text}    Run Keyword If    '${i}'=='5'    Get Value    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[1]
+    \    Run Keyword Unless    '${text}'=='${NONE}'    Append To List    ${infolist}    ${text}
+    \    ${text}    Run Keyword If    ${i}> 5 and ${i} < 10    Get Text    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div
+    \    Run Keyword Unless    '${text}'=='${NONE}'    Append To List    ${infolist}    ${text}
+    \    ${text}    Run Keyword If    ${i} > 9 and ${i} < 14    Get Value    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[1]
+    \    Run Keyword Unless    '${text}'=='${NONE}'    Append To List    ${infolist}    ${text}
+    \    Run Keyword If    ${i}==14    Scroll Element Into View    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[19]/div
+    \    ${text}    Run Keyword If    ${i}>13 and ${i} < 18    Get Text    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div
+    \    Run Keyword Unless    '${text}'=='${NONE}'    Append To List    ${infolist}    ${text}
+    \    ${text}    Run Keyword If    ${i}==18    Get Value    xpath=//table[@id="tblContent_js-listUsers"]/tbody/tr/td[${i}]/div/input[1]
+    \    Run Keyword Unless    '${text}'=='${NONE}'    Append To List    ${infolist}    ${text}
+    \    ${text}    Run Keyword If    ${i} == 19    Get Text    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr[1]/td[${i}]/div
+    \    Run Keyword Unless    '${text}'=='${NONE}'    Append To List    ${infolist}    ${text}
+    Log    ${infolist}
+    [Return]    @{infolist}
+
+Connect To Database
+    Connect To Database Using Custom Params    pymssql    database='bodb_OWP', user='accteam', password='@dragon#',host= '10.18.200.234'
+
+Check Items of Language
+    [Arguments]    ${language}
+    @{language_lst}    Create List
+    Click Element    xpath=/html/body/main/div[1]/div[1]/div/div[4]/div/table/tbody/tr[1]/td[20]/div/div/div/button
+    : FOR    ${i}    IN RANGE    1    4
+    \    Checkbox Should Not Be Selected    xpath=/html/body/main/div[1]/div[1]/div/div[4]/div/table/tbody/tr[1]/td[20]/div/div/div/div/ul/li[${i}]/label/input
+    \    ${language_txt}    Get Text    xpath=html/body/main/div[1]/div[1]/div/div[4]/div/table/tbody/tr[1]/td[20]/div/div/div/div/ul/li[${i}]/label/span
+    \    Append To List    ${language_lst}    ${language_txt}
+    Should Be Equal    ${language_lst}    ${language}
+
+Select Language
+    [Arguments]    ${section1}=${EMPTY}    ${section2}=${EMPTY}    ${section3}=${EMPTY}
+    Wait Until Element Is Visible    xpath=/html/body/main/div[1]/div[1]/div/div[4]/div/table/tbody/tr[1]/td[20]/div/div/div/button    timeout=20s
+    Click Element    xpath=/html/body/main/div[1]/div[1]/div/div[4]/div/table/tbody/tr[1]/td[20]/div/div/div/button
+    : FOR    ${i}    IN RANGE    1    4
+    \    ${text}    get text    xpath=html/body/main/div[1]/div[1]/div/div[4]/div/table/tbody/tr[1]/td[20]/div/div/div/div/ul/li[${i}]/label/span
+    \    Run keyword if    '${text}'=='${section1}'    Click Element    xpath=html/body/main/div[1]/div[1]/div/div[4]/div/table/tbody/tr[1]/td[20]/div/div/div/div/ul/li[${i}]/label/span
+    \    Run keyword if    '${text}'=='${section2}'    Click Element    xpath=html/body/main/div[1]/div[1]/div/div[4]/div/table/tbody/tr[1]/td[20]/div/div/div/div/ul/li[${i}]/label/span
+    \    Run keyword if    '${text}'=='${section3}'    Click Element    xpath=html/body/main/div[1]/div[1]/div/div[4]/div/table/tbody/tr[1]/td[20]/div/div/div/div/ul/li[${i}]/label/span
+
+Verify Selected Language
+    [Arguments]    ${language}
+    Wait Until Element Is Visible    xpath=/html/body/main/div[1]/div[1]/div/div[4]/div/table/tbody/tr/td[20]/div/div/div/button/span    timeout=10s
+    ${select_language}    Get Text    xpath=/html/body/main/div[1]/div[1]/div/div[4]/div/table/tbody/tr/td[20]/div/div/div/button/span
+    Should Be Equal    ${select_language}    ${language}

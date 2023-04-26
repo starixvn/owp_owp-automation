@@ -1,0 +1,129 @@
+*** Settings ***
+Library           Process
+Library           OperatingSystem
+Library           Screenshot
+Library           Collections
+Library           String
+Library           Dialogs
+Resource          ../Interface/login.txt
+Resource          ../Interface/login.txt
+Library           ExtendedSelenium2Library
+Resource          ../Interface/common_interface.txt
+Library           ExcelLibrary
+Resource          oddcompiler_action.txt
+
+*** Keywords ***
+Init
+    [Arguments]    ${Role}
+    ################    Set Setting value
+    Set Global Variable    ${cfWaitTime}    1
+    Set Selenium Implicit Wait    ${cfWaitTime}
+    Set Global Variable    ${cfSpeed}    0.2
+    Set Selenium Speed    ${cfSpeed}
+    #################    Get config variable from Config.py file
+    #################    Set Global variable
+    Set Global Variable    ${cfUrl}    ${Url}    #    ${Url}    https://owp.nexdev.net/V1/Auth?ReturnUrl=%2fV1%2f
+    Set Global Variable    ${cfBrowser}    ${Browser}    #    ${Browser}    chrome
+    Set Global Variable    ${cfPwd}    ${Pwd}    #    ${Pwd}    123456
+    Run Keyword Unless    '${Role}'=='${EMPTY}'    Login to main    ${cfUrl}    ${cfBrowser}    ${Role}    ${cfPwd}
+    [Teardown]
+
+Login to main
+    [Arguments]    ${URL}    ${browser}    ${username}=${EMPTY}    ${password}=${EMPTY}
+    Open Browser    ${URL}    ${browser}    #    #ff_profile_dir=C:\\firefox_profile    #ff_profile_dir=C:\\firefox_profile
+    Maximize Browser Window
+    Login    ${username}    ${password}
+
+Login
+    [Arguments]    ${username}    ${password}
+    Input Text    ${in_login_user}    ${username}
+    Focus    ${in_login_pass}
+    Input Password    ${in_login_pass}    ${password}
+    Click Element    ${in_login_btnLogin}
+    Run Keyword And Ignore Error    Wait Until Page Does Not Contain    ${in_login_btnLogin}
+
+Navigate To Menu
+    [Arguments]    ${menu}
+    ${logo}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="logo-container"]/span[1]/img
+    Run keyword if    '${logo}'=='True'    Click Element    xpath=//*[@id="logo-container"]/span[1]/img
+    Run keyword if    '${logo}'!='True'    Click Element    xpath=//*[@id="root"]/div/div[3]/div/a/span[1]/img
+    Wait Until Element Is Visible    xpath=//*[@id="js-toggleMenubar"]/i    timeout=20s
+    Click Element    xpath=//*[@id="js-toggleMenubar"]/i
+    Wait Until Element Is Visible    xpath=//*[@id="mCSB_1_container"]//a/span[contains(text(),'${menu}')]    timeout=20s
+    Click Element    xpath=//*[@id="mCSB_1_container"]//a/span[contains(text(),'${menu}')]
+
+Open Site
+    [Arguments]    ${url}
+    Open Browser    ${url}    Chrome
+    Maximize Browser Window
+
+Log Out
+    Wait Until Element Is Visible    ${userlogin_location}
+    Click Element    ${userlogin_location}
+    Wait Until Element Is Visible    ${logout_link}
+    Click Element    ${logout_link}
+    Run Keyword And Ignore Error    Wait Until Page Does Not Contain    ${userlogin_location}
+
+Event Upload File
+    Comment    Navigate To Menu    Event Upload
+    #set variable
+    ${file_path}    Set Variable    F:/Working/Automation/Internal/MT_OWP/Assignment.xlsx
+    ${doc_id}    Set Variable    mt1
+    Wait Until Element Is Visible    xpath=//*[@id="uploadDiv"]/form/div/div/div[3]/label    timeout=60s
+    Click Element    xpath=//*[@id="uploadDiv"]/form/div/div/div[3]/label
+    Choose File    xpath=//*[@id="excelFile"]    ${file_path}
+    Wait Until Element Is Visible    xpath=//*[@id="exampleBasic"]/div[2]/a[2]    timeout=60s
+    Click Element    xpath=//*[@id="exampleBasic"]/div[2]/a[2]
+    Wait until loading disappeared
+    Wait Until Element Is Visible    xpath=//*[@id="exampleBasic"]/div[2]/a[3]    timeout=60s
+    Click Element    xpath=//*[@id="exampleBasic"]/div[2]/a[3]
+    Wait until loading disappeared
+    Wait Until Element Is Visible    xpath=/html/body/div[12]/div/div[3]/button[1]    timeout=60s
+    Click Element    xpath=/html/body/div[12]/div/div[3]/button[1]
+
+Upload Event For Yesterday
+    Update Yesterday For Date Field In Event Upload File
+    Navigate To Menu    Event Upload
+    Wait Until Element Is Visible    xpath=//*[@id="exampleBasic"]/ul/li[1]/span
+    Click Element    xpath=//*[@id="exampleBasic"]/ul/li[1]/span
+    Wait Until Element Is Visible    xpath=//*[@id="date"]
+    ${date}    Get Value    xpath=//*[@id="date"]
+    Log    ${date}
+    Click Element    xpath=//*[@id="date"]
+    sleep    2s
+    Find Yesterday To Upload
+    Wait Until Element Is Visible    xpath=//*[@id="exampleBasic"]/div[2]/a[2]
+    Click Element    xpath=//*[@id="exampleBasic"]/div[2]/a[2]
+    Event Upload File
+
+Find Yesterday To Upload
+    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=*//tbody/tr/td/a[@class="ui-state-default"]
+    log    ${status}
+    Comment    Click Element    xpath=*//tbody/tr/td/a[@class="ui-state-default"]
+    Run Keyword If    '${status}'=='True'    Click Element    xpath=*//tbody/tr/td/a[@class="ui-state-default"]
+    Run Keyword If    '${status}'=='False'    Run Keywords    Click Element    xpath=/html/body/div[12]/div/a[1]/span
+    ...    AND    Wait Until Element Is Visible    xpath=*//tbody/tr/td/a[@class="ui-state-default"]
+    ...    AND    Click Element    xpath=*//tbody/tr/td/a[@class="ui-state-default"]
+
+Update Yesterday For Date Field In Event Upload File
+    #set variable
+    ${file_path}    Set Variable    F:/Working/Automation/Internal/MT_OWP/Assignment.xlsx
+    ${doc_id}    Set Variable    mt1
+    Open Excel Document    ${file_path}    ${doc_id}
+    ${date}    Yesterday
+    Write Excel Cell    1    2    ${date}
+    Save Excel Document    Assignment.xlsx
+    Close All Excel Documents
+
+Gen_Confirmation
+    [Arguments]    ${expected_alert}    ${action}
+    Wait Until Element Is Visible    xpath=//*[@id="swal2-content"]    timeout=60s
+    ${content}    Get Text    xpath=//*[@id="swal2-content"]
+    Log    ${content}
+    Should Be Equal As Strings    ${expected_alert}    ${content}
+    Run Keyword If    '${action}'=='OK'    Click Element    xpath=//button[contains(text(),'OK')]
+    Run Keyword If    '${action}'=='Cancel'    Click Element    xpath=//button[contains(text(),'Cancel')]
+
+Wait until loading disappeared
+    Run Keyword And Ignore Error    Wait Until Element Is Visible    xpath=/html/body/main/div[2]/svg    timeout=20s
+    Run Keyword And Ignore Error    Wait Until Page Does Not Contain Element    xpath=/html/body/main/div[2]/svg    timeout=20s

@@ -1,0 +1,52 @@
+*** Settings ***
+Suite Setup       init    sa
+Suite Teardown    Close All Browsers
+Test Setup
+Test Teardown
+Resource          ../Interface/Usermagement.txt
+Resource          ../Interface/login.txt
+Resource          ../Action/common.txt
+Resource          ../Action/common.txt
+Resource          ../Action/usermanagement_action.txt
+Library           ExtendedSelenium2Library
+Library           String
+Resource          ../Interface/common_interface.txt
+Library           DatabaseLibrary
+Resource          ../Interface/workingshift.txt
+Resource          ../Action/working_shift.txt
+Resource          ../Interface/workingshift.txt
+Library           ExcelLibrary
+Library           Collections
+Resource          ../Action/AddEvent.txt
+Library           BuiltIn
+
+*** Test Cases ***
+Verify Daily Page
+    Navigate To Menu    Daily Working Shift
+    Time Zone Should Be    GMT+8
+    Comment    Verify Label Of Daily Filter    Date    Employee    Section    Shift    Location
+    ...    Exclude closed accounts    Search
+    Comment    Verify Date Displayed Daily Working Shift
+    #default value of Section, Shift, Location listbox Must be All, Exclude Closed Account must be checked
+    Comment    Verify By Default Filter_Daily    All    All    All    1
+    #Check items of listbox
+    Comment    Verify Items of Section list_checked    @{section_itemlist}
+    Comment    Verify Items of Location list_checked    @{location_itemlist}
+    Comment    @{shiftlist}    Create List    00 >01    00 >02    00 >03
+    Comment    ${count}    Select Multiple Shifts    @{shiftlist}
+    Comment    Search
+    Comment    Verify By Default Filter_Daily    All    ${count} selected    All    1
+    Comment    Check Header Of Datagrid    @{header_list}
+    Comment    Search Employee    starix4
+    Comment    ${po}    Find Employee In Table_Daily    starix4
+    Comment    Verify Employee In Table_Daily    ${po}    starix4    LST    ${EMPTY}    A+
+    ...    0 > 8:00
+    #Color setting Icon
+    Click Element    xpath=//*[@id="sticky-filter"]/div/div[1]/div[2]/div[1]/span/img
+    ${attr}    Get CSS Property Value    css=div.color-group:nth-child(2) > div:nth-child(2) > span:nth-child(1)    background-color
+    Log    ${attr}
+    Search Employee    superuser
+    Wait Until Element Is Visible    css=span.betType-item:nth-child(1) > span:nth-child(1)    timeout=10s
+    ${attr11}    Get CSS Property Value    css=span.betType-item:nth-child(1) > span:nth-child(1)    background-color
+    Log    ${attr11}
+    Should Be Equal    ${attr}    ${attr11}

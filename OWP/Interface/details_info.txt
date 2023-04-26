@@ -1,0 +1,7 @@
+*** Variables ***
+${btn_edit_matchInfo}    xpath = //button[contains(.,'Match Info')]/following-sibling::div//button
+${btn_save_matchInfo}    xpath = //button[text()= 'Match Info']/following-sibling::div[contains(@class, 'btn-action')]//button[contains(@class, 'action icon-save')]
+${btn_cancel_matchInfo}    xpath = //button[text()= 'Match Info']/following-sibling::div[contains(@class, 'btn-action')]//button[contains(@class, 'action icon-cancel')]
+${btn_unselected}    xpath = //span[text()='Selected']/following-sibling::div//span[contains(@class, 'switch-slider')]
+${btn_ok}         xpath = //button[text()='OK']
+${btn_cancel}     xpath = //button[text()='Cancel']

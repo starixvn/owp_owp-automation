@@ -1,0 +1,5 @@
+*** Settings ***
+
+*** Variables ***
+${user_txt}       xpath=//form/div/div[1]/input
+${search_btn}     xpath=//form//a[contains(text(),'Search')]

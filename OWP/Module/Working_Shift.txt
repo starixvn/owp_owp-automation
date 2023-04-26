@@ -1,0 +1,549 @@
+*** Settings ***
+Suite Setup       init    sa
+Suite Teardown    Close All Browsers
+Test Setup
+Test Teardown
+Resource          ../Interface/Usermagement.txt
+Resource          ../Interface/login.txt
+Resource          ../Action/common.txt
+Resource          ../Action/common.txt
+Resource          ../Action/usermanagement_action.txt
+Library           ExtendedSelenium2Library
+Library           String
+Resource          ../Interface/common_interface.txt
+Library           DatabaseLibrary
+Resource          ../Interface/workingshift.txt
+Resource          ../Action/working_shift.txt
+Resource          ../Interface/workingshift.txt
+Library           ExcelLibrary
+Library           Collections
+Resource          ../Action/AddEvent.txt
+Library           BuiltIn
+
+*** Test Cases ***
+Verify Week Page
+    Navigate To Menu    Working Shift Management
+    Wait Until Page Does Not Contain Element    xpath=/html/body/main/div[2]/svg
+    sleep    10s
+    Select Time Zone    GMT+7
+    sleep    10s
+    Wait Until Page Does Not Contain Element    xpath=/html/body/main/div[2]/svg
+    Time Zone Should Be    GMT+7
+    sleep    10s
+    Select Time Zone    GMT+8
+    Wait Until Page Does Not Contain Element    xpath=/html/body/main/div[2]/svg
+    sleep    10s
+    Verify Label Of Week Filter    Date    Employee    Department    Section    Category    Location
+    ...    Search    Upload    Export Pickup Schedule
+    #default value of Section, Category, Location listbox Must be All, Exclude Closed Account must be checked
+    Verify By Default Filter_Week    All    All    All    All
+    #Check items of listbox
+    Verify Items of Department List_checked    @{department_itemlist}
+    Verify Items of Section list_checked    @{section_itemlist}
+    Verify Items of Category list_checked    @{category_itemlist}
+    Verify Items of Location list_checked    @{location_itemlist}
+
+Add Shift_Panel
+    [Documentation]    Purpose:
+    ...    - Add New Shift
+    ...    - Add Existing Shift
+    ...    - Verify Added shift (include background)
+    Navigate To Menu    Working Shift Management
+    Go To Shifts Management
+    Add New Shift    MartinShift    1
+    Verify Add New Shift    MARTINSHIFT
+    #Verify add existing shift
+    Add New Shift    MartinShift    1
+    Alert    Shift existed
+    Delete Shift_panel    MARTINSHIFT    OK
+    Verify Add New Shift    MARTINSHIFT
+    #Incorrect Shift format
+    Add New Shift    06 >23(SPECIAL)    1
+    Alert    The hour(IN) of SPECIAL shift violates the rules! You cannot add this shift!
+    Add New Shift    08 >12(REAL)    1
+    Alert    The hour(IN) of REAL shift violates the rules! You cannot add this shift!
+    # Special, Real Shift
+    Add New Shift    07 >22 (SPECIAL)    1
+    ${bg_color1}    ${bg_color2}    Verify Add New Shift    07 >22 (SPECIAL)
+    Delete Shift_panel    07 >22 (SPECIAL)    OK
+    Add New Shift    06 >13 (REAL)    1
+    ${bg_color1}    ${bg_color2}    Verify Add New Shift    06 >13 (REAL)
+    Delete Shift_panel    06 >13 (REAL)    OK
+    # Real Shift
+    Add New Shift    03 >08    1
+    ${bg_color1}    ${bg_color2}    Verify Add New Shift    03 >08
+    Select Time Zone    GMT+7
+    Go To Shifts Management
+    Verify Shift Background_In list    02 >07    ${bg_color2}
+    Delete Shift_panel    02 >07    OK
+
+Delete Shift_Panel
+    [Documentation]    Purpose:
+    ...    - Delete New Shift \ >> Verify warning
+    ...    - Delete Existing shift >> Verify warning
+    ...    - Delete Assigned shift >> Verify warning
+    Navigate To Menu    Working Shift Management
+    Go To Shifts Management
+    Add New Shift    Testingshift    1
+    Verify Add New Shift    TESTINGSHIFT
+    #Verify Delete shift with cancel    Delete: confirm cancel
+    Delete Shift_panel    TESTINGSHIFT    Cancel
+    Verify Add New Shift    TESTINGSHIFT
+    #Verify Delete shift with Ok    Delete: confirm OK
+    Delete Shift_panel    TESTINGSHIFT    OK
+    Verify Add New Shift    TESTINGSHIFT
+    #Verify Delete assigned shift    cannot delete
+    Delete Shift_panel    PH    Yes
+    Verify Add New Shift    PH
+
+Change Shift Background Color_Panel
+    [Documentation]    Purpose:
+    ...    - Change background color of shift
+    Navigate To Menu    Working Shift Management
+    Go To Shifts Management
+    Find And Change BackGround Of Shift    0 > 8:00    53b557    Cancel
+    Find And Verify BackGround Of Shift    0 > 8:00    5a2398
+    Find And Change BackGround Of Shift    0 > 8:00    53b557    Done
+    Find And Verify BackGround Of Shift    0 > 8:00    53b557
+    Verify Shift Background_In list    0 > 8:00    53b557
+    Find And Change BackGround Of Shift    0 > 8:00    5a2398    Done
+    Find And Verify BackGround Of Shift    0 > 8:00    5a2398
+    Verify Shift Background_In list    0 > 8:00    5a2398
+
+Assign Normal Shift_Main WS
+    Navigate To Menu    Working Shift Management
+    #Set variable    -----------------------
+    ${action}    Set Variable    Add/Update a shift
+    ${oldvalue}    Set Variable    0 > 8:00
+    ${newvalue}    Set Variable    00 >06
+    # select single or multiple section
+    Comment    Search Employee    starix4_nickname
+    Comment    @{shiftlist}    Get Shifts
+    ${background_code}    Search Employee And Assign Shift    starix4_nickname    ${oldvalue}
+    ${logtime}    Return DateTime GMT+8
+    Search Employee And Verify Assigned Shift    starix4_nickname    ${oldvalue}    ${background_code}
+    Verify Modified By User    ${user_login}    2    ${logtime}
+    ${background_code}    Search Employee And Assign Shift    starix4_nickname    ${newvalue}
+    ${logtime1}    Return DateTime GMT+8
+    ${logtime2}    Fetch from left    ${logtime1}    ${SPACE}(GMT+8)
+    Search Employee And Verify Assigned Shift    starix4_nickname    ${newvalue}    ${background_code}
+    Verify Modified By User    ${user_login}    2    ${logtime1}
+    ${monday}    ${tuesday}    ${wed}    ${thurday}    ${friday}    ${saturday}    ${sunday}
+    ...    Return Days Of Week
+    @{write_log}    Verify History Popup    starix4_nickname
+    @{input_list}    Create List    ${logtime2}    ${user_login}    ${action}    ${sunday}: ${oldvalue}    ${sunday}: ${newvalue}
+    #Verify Log
+    Lists Should Be Equal    ${write_log}    ${input_list}
+    Close Writelog Popup
+
+Remove Normal Shift_Main WS
+    Comment    Navigate To Menu    Working Shift Management
+    Comment    Search Employee And Remove Assigned Single Shift    starix4_nickname    0 > 8:00    OK
+    Comment    ${logtime}    Return DateTime GMT+8
+    Comment    Search Employee And Verify Assigned Shift    starix4_nickname    ${EMPTY}    ${EMPTY}
+    Comment    Verify Modified By User    ${user_login}    2    ${logtime}
+    Navigate To Menu    Working Shift Management
+    #Set variable    -----------------------
+    ${action}    Set Variable    Delete a shift
+    ${oldvalue}    Set Variable    0 > 8:00
+    ${newvalue}    Set Variable    ${EMPTY}
+    #-----------------
+    ${background_code}    Search Employee And Assign Shift    starix4_nickname    ${oldvalue}
+    Search Employee And Remove Assigned Single Shift    starix4_nickname    ${oldvalue}    OK
+    ${logtime}    Return DateTime GMT+8
+    ${logtime1}    Fetch from left    ${logtime}    ${SPACE}(GMT+8)
+    Search Employee And Verify Assigned Shift    starix4_nickname    ${EMPTY}    ${EMPTY}
+    Verify Modified By User    ${user_login}    2    ${logtime}
+    ${monday}    ${tuesday}    ${wed}    ${thurday}    ${friday}    ${saturday}    ${sunday}
+    ...    Return Days Of Week
+    @{write_log}    Verify History Popup    starix4_nickname
+    @{input_list}    Create List    ${logtime1}    ${user_login}    ${action}    ${sunday}: ${oldvalue}    ${newvalue}
+    #Verify Log
+    Lists Should Be Equal    ${write_log}    ${input_list}
+    Close Writelog Popup
+
+Add/Remove OT Shift_Main WS
+    Navigate To Menu    Working Shift Management
+    #---------------Set variable
+    ${action}    Set Variable    Add/Update a shift
+    ${offshift}    Set Variable    OFF
+    ${otshift}    Set Variable    00 >08
+    # search and assign shift
+    ${bg_off_ph}    ${bg_ot}    Search Employee And Assign OT Shift    starix4_nickname    ${offshift}    ${otshift}
+    ${logtime}    Return DateTime GMT+8
+    ${logtime1}    Fetch from left    ${logtime}    ${SPACE}(GMT+8)
+    Search Employee And Verify Assigned OT Shift    starix4_nickname    ${offshift}    ${bg_off_ph}    ${otshift}    ${bg_ot}
+    Verify Modified By User    ${user_login}    2    ${logtime}
+    ${monday}    ${tuesday}    ${wed}    ${thurday}    ${friday}    ${saturday}    ${sunday}
+    ...    Return Days Of Week
+    @{write_log}    Verify History Popup    starix4_nickname
+    @{input_list}    Create List    ${logtime1}    ${user_login}    ${action}    ${sunday}: ${offshift}    ${sunday}: ${otshift}/${offshift}
+    #Verify Log
+    Lists Should Be Equal    ${write_log}    ${input_list}
+    Close Writelog Popup
+    Search Employee And Remove Assigned OT Shift    starix4_nickname    00 >08    OK
+    ${logtime}    Return DateTime GMT+8
+    ${logtime1}    Fetch from left    ${logtime}    ${SPACE}(GMT+8)
+    Search Employee And Verify Assigned Shift    starix4_nickname    OFF    ${bg_off_ph}
+    Verify Modified By User    ${user_login}    2    ${logtime}
+    ${monday}    ${tuesday}    ${wed}    ${thurday}    ${friday}    ${saturday}    ${sunday}
+    ...    Return Days Of Week
+    @{write_log}    Verify History Popup    starix4_nickname
+    @{input_list}    Create List    ${logtime1}    ${user_login}    Delete a shift    ${sunday}: ${otshift}/${offshift}    ${sunday}: ${offshift}
+    #Verify Log
+    Lists Should Be Equal    ${write_log}    ${input_list}
+    Close Writelog Popup
+    Search Employee And Remove Assigned Single Shift    starix4_nickname    OFF    OK
+    ${logtime}    Return DateTime GMT+8
+    Search Employee And Verify Assigned Shift    starix4_nickname    ${EMPTY}    ${EMPTY}
+    Verify Modified By User    ${user_login}    2    ${logtime}
+
+Delete Shifts in a week of user
+    Navigate To Menu    Working Shift Management
+    #---------------Set variable
+    ${shift}    Set Variable    OFF
+    # search and assign shift, copy shift from employee
+    ${position_emp}    Find Employee In Section    OPSA    starix14_nickname
+    Action Option    ${position_emp}    Delete shift    starix14_nickname
+    ${logtime}    Return DateTime GMT+8
+    Verify Assigned Shift In Row    ${position_emp}    ${EMPTY}    ${EMPTY}
+    Verify Modified By User    ${user_login}    ${position_emp}    ${logtime}
+
+Copy Single Shift From User To another Users
+    Navigate To Menu    Working Shift Management
+    #---------------Set variable
+    ${shift}    Set Variable    OFF
+    # search and assign shift, copy shift from employee
+    ${position_emp}    Find Employee In Section    OPSA    starix14_nickname
+    Comment    ${bg_color}    Assign Shift    ${position_emp}    ${shift}
+    ${bg_color}    Assign Shift In Row    ${position_emp}    ${shift}
+    Copy Assigned Single Shift    ${position_emp}    ${shift}
+    #Paste shift to end employee
+    ${location}    Find Employee In Table    JackyDang
+    Paste Assigned Single Shift    ${location}
+    ${location}    Find Employee In Table    starix15_mt
+    Paste Assigned Single Shift    ${location}
+    Click Element    ${search}
+    ${location}    Find Employee In Table    JackyDang
+    Verify Assigned Shift In Row    ${location}    ${shift}    ${bg_color}
+    ${location}    Find Employee In Table    starix15_mt
+    Verify Assigned Shift In Row    ${location}    ${shift}    ${bg_color}
+    Verify Modified By User    ${user_login}    ${location}
+    #Verify after pasting shift to end employee
+
+Copy OT Shift From User To another Users
+    Navigate To Menu    Working Shift Management
+    #---------------Set variable
+    ${shift}    Set Variable    OFF
+    # search and assign shift, copy shift from employee
+    ${position_emp}    Find Employee In Section    OPSA    starix14_nickname
+    ${bg_off_ph}    ${bg_ot}    Assign OT Shift_Row    ${position_emp}    PH    09 >18
+    Copy Assigned OT Shift    ${position_emp}    PH    09 >18
+    ${location}    Find Employee In Table    JackyDang
+    Paste Assigned Single Shift    ${location}
+    Click Element    ${search}
+    ${location}    Find Employee In Table    JackyDang
+    #Verify after pasting shift to end employee
+    Verify Assigned OT Shift In Row    ${location}    PH    ${bg_off_ph}    09 >18    ${bg_ot}
+    Verify Modified By User    ${user_login}    ${location}
+    #Clear shift for testing next case
+    ${position_emp}    Find Employee In Section    OPSA    starix14_nickname
+    Action Option    ${position_emp}    Delete shift    starix14_nickname
+
+Paste Whole Shifts From User To Another Users
+    Navigate To Menu    Working Shift Management
+    #---------------Set variable
+    ${shift}    Set Variable    OFF
+    # search and assign shift, copy shift from employee
+    ${position_emp}    Find Employee In Section    OPSA    starix14_nickname
+    ${bg_color}    Assign Shift In Row    ${position_emp}    ${shift}
+    Action Option    ${position_emp}    Copy shift    starix14_nickname
+    Paste Whole Shifts    Jacky
+    ${location}    Find Employee In Table    Jacky
+    Verify Assigned Shift In Row    ${location}    ${shift}    ${bg_color}
+    Verify Modified By User    ${user_login}    ${location}
+
+Copy Frome The Previous Week Shifts
+    Navigate To Menu    Working Shift Management
+    ${position_emp}    Find Employee In Section    OPSA    starix14_nickname
+    Action Option    ${position_emp}    Delete shift    starix14_nickname
+    #---------------Set variable
+    ${shift}    Set Variable    OFF
+    # search and assign shift, copy shift from employee
+    ${bg_color}    Assign Shift In Row    ${position_emp}    ${shift}
+    Move To Week    Next
+    Action Option    ${position_emp}    Copy from previous week    starix14_nickname
+    # Verify after copying from previous week shift
+    ${location}    Find Employee In Table    starix14_nickname
+    Verify Assigned Shift In Row    ${location}    ${shift}    ${bg_color}
+    Verify Modified By User    ${user_login}    ${location}
+
+Order Staffs In Section_Drap And Drop
+    Navigate To Menu    Working Shift Management
+    Change Order Mode
+    #User logged in is depended on OPSA section
+    Verify Section After Changing To Order Mode    OPSA
+    #Position of staff before ordering
+    ${position_start}    Find Employee In Table    sa_nickname
+    ${position_end}    Find Employee In Table    Jimmy
+    #Order Staff
+    ${position_fromstaff}    ${position_tostaff}    Order Staff In Section    sa_nickname    Jimmy
+    #Verify after ordering staff
+    ${position_changed}    Evaluate    ${position_end} - ${position_start}
+    ${position_changed1}    Evaluate    ${position_end} + 1
+    Run keyword if    '${position_start}' > '${position_end}'    Run keywords    Should Be Equal    ${position_end}    ${position_fromstaff}
+    ...    AND    Should Be Equal    ${position_tostaff}    ${position_changed1}
+    Run keyword if    '${position_start}' < '${position_end}'    Run keywords    Should Be Equal    ${position_fromstaff}    ${position_changed}
+    ...    AND    Should Be Equal    ${position_end}    ${position_tostaff}
+
+Order Staffs In Section_Customize Order User
+    Navigate To Menu    Working Shift Management
+    Change Order Mode
+    #User logged in is depended on OPSA section
+    Verify Section After Changing To Order Mode    OPSA
+    #Position of staff before ordering
+    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="jssortable"]/div
+    ${count}    Run keyword If    '${status}'=='True'    Get Matching Xpath Count    xpath=//*[@id="jssortable"]/div
+    ${count}    Evaluate    ${count}
+    ${min}    Evaluate    1
+    ${position_before1}    Find Employee In Table    sa_nickname
+    #Position of staff after ordering    Up
+    Customize Order User    ${position_before1}    Up
+    Click Element    ${search}
+    ${position_after}    Find Employee In Table    sa_nickname
+    ${position_changed}    Evaluate    ${position_before1} - 1
+    Run keyword if    ${position_before1}==1    Should Be Equal    ${position_after}    ${position_before1}
+    ...    ELSE    Should Be Equal    ${position_after}    ${position_changed}
+    Click Element    ${search}
+    #Down
+    ${position_before2}    Find Employee In Table    sa_nickname
+    Customize Order User    ${position_before2}    Down
+    Click Element    ${search}
+    ${position_after}    Find Employee In Table    sa_nickname
+    ${position_changed}    Evaluate    ${position_before2} + 1
+    Run keyword if    '${position_before2}'=='${count}'    Should Be Equal    ${position_after}    ${count}
+    ...    ELSE    Should Be Equal    ${position_after}    ${position_changed}
+    Click Element    ${search}
+    #Top
+    ${position_before3}    Find Employee In Table    sa_nickname
+    Customize Order User    ${position_before3}    Top
+    Click Element    ${search}
+    ${position_after}    Find Employee In Table    sa_nickname
+    Run keyword if    ${position_before3}==1    Should Be Equal    ${position_after}    ${min}
+    ...    ELSE    Should Be Equal    ${position_after}    ${min}
+    Click Element    ${search}
+    #Bottom
+    ${position_before4}    Find Employee In Table    sa_nickname
+    Customize Order User    ${position_before4}    Bottom
+    Click Element    ${search}
+    ${position_after}    Find Employee In Table    sa_nickname
+    Run keyword if    '${position_before4}'=='${count}'    Should Be Equal    ${position_after}    ${count}
+    ...    ELSE    Should Be Equal    ${position_after}    ${count}
+
+Test default
+    Navigate To Menu    Working Shift Management
+    Comment    Verify Label Of Week Filter    Date    Employee    Section    Category    Location
+    ...    Exclude closed accounts    Search    Upload    Export Pickup Schedule
+    Comment    Verify By Default Filter_Week    All    All    All    1
+    Comment    Verify Items of Section list_checked    @{section_itemlist}
+    Comment    Verify Items of Category list_checked    @{category_itemlist}
+    Comment    Verify Items of Location list_checked    @{location_itemlist}
+    Comment    # Uncheck All Sections
+    Comment    Verify Items of Section list_unchecked    @{section_itemlist}
+    Comment    # Uncheck All Categories
+    Comment    Verify Items of Category list_unchecked    @{category_itemlist}
+    Comment    # Uncheck All Locations
+    Comment    Verify Items of Location list_unchecked    @{location_itemlist}
+    Comment    Select Time Zone    GMT+7
+    Comment    Time Zone Should Be    GMT+7
+    Comment    Select Week or Day    Day
+    Comment    Verify Label Of Day Filter    Date    Employee    Section    Shift    Location
+    ...    Exclude closed accounts    Search
+    Comment    Time Zone Should Be    GMT+8
+    # select single or multiple section
+    Comment    Select Section    LA    LG
+    Comment    Select Category    Local    None
+    Comment    Select Location    CTI    None
+    Comment    ${background_code}    Search Employee And Assign Shift    starix4_nickname    0 > 8:00
+    Comment    Search Employee And Verify Assigned Shift    starix4_nickname    0 > 8:00    ${background_code}
+    Comment    Search Employee And Remove Assigned Single Shift    starix4_nickname    0 > 8:00    OK
+    Comment    Search Employee And Verify Assigned Shift    starix4_nickname    ${EMPTY}    ${EMPTY}
+    Comment    ${bg_off_ph}    ${bg_ot}    Search Employee And Assign OT Shift    starix4_nickname    OFF    00 >08
+    Comment    Search Employee And Verify Assigned OT Shift    starix4_nickname    OFF    ${bg_off_ph}    00 >08    ${bg_ot}
+    Comment    Search Employee And Remove Assigned OT Shift    starix4_nickname    00 >08    OK
+    Comment    Search Employee And Verify Assigned Shift    starix4_nickname    OFF    ${bg_off_ph}
+    Comment    Search Employee And Remove Assigned Single Shift    starix4_nickname    OFF    OK
+    ${position_emp}    Find Employee In Section    OPSA    starix14_nickname
+    Comment    ${bg_color}    Assign Shift    ${position_emp}    23 >22
+    Comment    Copy Assigned Single Shift    ${position_emp}    23 >22
+    Comment    ${location}    Find Employee In Table    Jacky
+    Comment    Paste Assigned Single Shift    ${location}
+    Comment    Search Employee And Verify Assigned Shift    Jacky    23 >22    ${bg_color}
+    Comment    ${location}    Find Employee In Table    starix14_nickname
+    #Copy OT
+    Comment    ${bg_off_ph}    ${bg_ot}    Assign OT Shift_Row    ${position_emp}    PH    23 >22
+    Comment    Copy Assigned OT Shift    ${position_emp}    PH    23 >22
+    Comment    ${location}    Find Employee In Table    Jacky
+    Comment    Paste Assigned Single Shift    ${location}
+    Comment    Click Element    ${search}
+    Comment    ${location}    Find Employee In Table    Jacky
+    Comment    Verify Assigned OT Shift In Row    ${location}    PH    ${bg_off_ph}    23 >22    ${bg_ot}
+    Action Option    ${position_emp}    Delete shift    starix14_nickname
+    Verify Assigned Shift In Row    ${position_emp}    ${EMPTY}    ${EMPTY}
+
+Default Shift Setting_Add Only Default Shift
+    [Documentation]    - Setting Default Shift
+    ...    - Check if not apply current week => Default shift will be applied for next weeks
+    ...    - Check if apply current week => Default shift will be applied from current week to next weeks
+    Navigate To Menu    Working Shift Management
+    ${position_emp}    Find Employee In Section    OPSA    starix14_nickname
+    Navigate To Default Shift Setting    ${position_emp}
+    Verify Default Shift Form    ${position_emp}    starix14_nickname
+    ${bg_color}    Add/Edit Default Shift    ${position_emp}    PH    ${EMPTY}    Apply
+    ${logtime}    Return DateTime GMT+8
+    @{bg_colorlist}    Create List    ${bg_color}    ${bg_color}    ${bg_color}    ${bg_color}    ${bg_color}
+    ...    ${bg_color}    ${bg_color}
+    @{shiftlist}    Create List    PH    PH    PH    PH    PH
+    ...    PH    PH
+    Move To Week    Next
+    Verify Assigned Shift In Row_xtest    ${position_emp}    ${shiftlist}    ${bg_colorlist}
+    Verify Modified By User    ${user_login}    ${position_emp}    ${logtime}
+    Move To Week    Previous
+    ${bg_color}    Add/Edit Default Shift    ${position_emp}    PH    1    Apply
+    ${logtime}    Return DateTime GMT+8
+    Search
+    Verify Assigned Shift In Row_xtest    ${position_emp}    ${shiftlist}    ${bg_colorlist}
+    Verify Modified By User    ${user_login}    ${position_emp}    ${logtime}
+
+Default Shift Setting_Add Diffirent Shift
+    Navigate To Menu    Working Shift Management
+    ${position_emp}    Find Employee In Section    OPSA    starix14_nickname
+    Navigate To Default Shift Setting    ${position_emp}
+    @{bg_colorlist}    Setting Default Shift    ${position_emp}    PH    OFF    OFF    OFF
+    ...    OFF    OFF    OFF    OFF    1    Apply
+    @{shiftlist}    Create List    PH    OFF    OFF    OFF    OFF
+    ...    OFF    OFF    OFF
+    Remove Values From List    ${bg_colorlist}    ${bg_colorlist[0]}
+    Remove Values From List    ${shiftlist}    ${shiftlist[0]}
+    Verify Assigned Shift In Row_xtest    ${position_emp}    ${shiftlist}    ${bg_colorlist}
+
+Verify Adding Remark To Staff
+    [Documentation]    - Verify Add/Edit staff's remark
+    ...    - Verify Staff's info by clicking on nick name
+    Navigate To Menu    Working Shift Management
+    #set variable
+    ${content}    Set Variable    Like any other social media site Facebook has length requirements when it comes to writing on the wall
+    ${position_emp}    Find Employee In Section    LST    starix4_nickname
+    Add Remark To Staff    ${position_emp}    ${content}    Save
+    Verify Added/Edit Remark To Staff    ${position_emp}    ${content}
+    ${position}    Find Employee In Table    starix4_nickname
+    Verify Info Staff_Working Shift    ${position}    02354    0938855200    martin.tran@starixsoft.vn
+
+Verify Upload Working Shift
+    [Documentation]    - Upload Working Shift
+    ...    - Verify Uploaded shift
+    Navigate To Menu    Working Shift Management
+    Comment    Wait Until Element Is Visible    xpath=//*[@id="sticky-filter"]/div/div[2]/div/div[1]/span[contains(text(),'Staff')]    timeout=1000s
+    #set variable
+    ${file_path}    Set Variable    F:/Working/Automation/Internal/OWP/WS.xlsx
+    ${doc_id}    Set Variable    mt1
+    sleep    20s
+    Upload Working Shift    ${file_path}
+    Get Shift From File And Verify Shift After Uploading Successully    ${file_path}    5    #total of records in excel file
+
+ttt
+    Navigate To Menu    Working Shift Management
+    #Set variable    -----------------------
+    ${action}    Set Variable    Add/Update a shift
+    ${oldvalue}    Set Variable    0 > 8:00
+    ${newvalue}    Set Variable    00 >06
+    # select single or multiple section
+    Comment    Search Employee    starix4_nickname
+    Comment    @{shiftlist}    Get Shifts
+    ${background_code}    Search Employee And Assign Shift    starix4_nickname    ${oldvalue}
+    ${logtime}    Return DateTime GMT+8
+    Search Employee And Verify Assigned Shift    starix4_nickname    ${oldvalue}    ${background_code}
+    Verify Modified By User    ${user_login}    2    ${logtime}
+    ${background_code}    Search Employee And Assign Shift    starix4_nickname    ${newvalue}
+    ${logtime1}    Return DateTime GMT+8
+    ${logtime2}    Fetch from left    ${logtime1}    ${SPACE}(GMT+8)
+    Search Employee And Verify Assigned Shift    starix4_nickname    ${newvalue}    ${background_code}
+    Verify Modified By User    ${user_login}    2    ${logtime1}
+    ${monday}    ${tuesday}    ${wed}    ${thurday}    ${friday}    ${saturday}    ${sunday}
+    ...    Return Days Of Week
+    @{write_log}    Verify History Popup    starix4_nickname
+    @{input_list}    Create List    ${logtime2}    ${user_login}    ${action}    ${sunday}: ${oldvalue}    ${sunday}: ${newvalue}
+    #Verify Log
+    Lists Should Be Equal    ${write_log}    ${input_list}
+
+Test Add Event
+    Navigate To Menu    Live Game Assignment
+    #set varibale
+    ${matchno}    Set Variable    mt
+    ${koftime}    Set Variable    06:00 PM
+    ${League}    Set Variable    League
+    ${home}    Set Variable    Home
+    ${away}    Set Variable    Away
+    #action
+    Wait Until Element Is Visible    ${addevent_btn}    timeout=20s
+    Click Element    ${addevent_btn}
+    : FOR    ${i}    IN RANGE    1    50
+    \    Add Event    ${matchno}${i}    06    00    PM    ${League}${i}
+    \    ...    ${home}${i}    ${away}${i}    Add & Continue
+
+Add odd compiler
+    Navigate To Menu    Odds Compiler
+    ${odd}    Set Variable    2
+    ${row}    Set Variable    200 rows
+    ${date}    Set Variable    28
+    #calendar
+    Wait Until Page Contains Element    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[1]/span    timeout=20s
+    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[1]/span
+    #select day
+    Wait Until Page Contains Element    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[1]/div[3]/div/div/div[2]/div[2]/div/div[contains(text(),'${date}')]    timeout=20s
+    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[1]/div[3]/div/div/div[2]/div[2]/div/div[contains(text(),'${date}')]
+    #submit
+    Wait Until Page Contains Element    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[4]/button    timeout=20s
+    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[4]/button
+    Wait Until Page Contains Element    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[2]/div/div[2]/span[2]/select    timeout=20s
+    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[2]/div/div[2]/span[2]/select
+    #select rows to display
+    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[2]/div/div[2]/span[2]/select/option[contains(text(),'${row}')]
+    Wait Until Page Contains Element    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[2]/div/div[2]/span[1]/span    timeout=20s
+    Comment    ${numberpage}    Get Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[2]/div/div[2]/span[1]/span
+    : FOR    ${i}    IN RANGE    1    5
+    \    Input Odd
+    \    Wait Until Page Contains Element    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[2]/div/div[3]/button    timeout=20s
+    \    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[2]/div/div[3]/button
+    Comment    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[5]/div/button
+    Comment    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[5]/div/button
+    Comment    Wait Until Element Is Visible    xpath=/html/body/div[2]/div/div[3]/button[2]
+    Comment    Click Element    xpath=/html/body/div[2]/div/div[3]/button[2]
+    Comment    sleep    180s
+    Comment    ${status_savebtn}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[5]/div/button[contains(text(),'Saved')]    timeout=20s
+    Comment    Log    ${status_savebtn}
+
+Add odd compiler_Old
+    Navigate To Menu    Odds Compiler
+    ${odd}    Set Variable    2
+    ${row}    Set Variable    1000
+    Comment    #calendar
+    Comment    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[1]/i    timeout=10s
+    Comment    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[1]/i
+    Comment    #select day
+    Comment    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[1]/div[3]/div/div/div[2]/div[2]/div[5]/div[contains(text(),'28')]    timeout=10s
+    Comment    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[1]/div[3]/div/div/div[2]/div[2]/div[5]/div[contains(text(),'28')]
+    Comment    #submit
+    Comment    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[4]/button    timeout=10s
+    Comment    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[4]/button
+    Wait Until Element Is Visible    xpath=/html/body/main/div[1]/div[1]/div/div[3]/a    timeout=10s
+    Click Element    xpath=/html/body/main/div[1]/div[1]/div/div[3]/a
+    Wait Until Element Is Visible    xpath=/html/body/main/div[1]/div[3]/div[2]/div/span[2]/div/input    timeout=10s
+    Click Element    xpath=/html/body/main/div[1]/div[3]/div[2]/div/span[2]/div/input
+    #select rows to display
+    Wait Until Element Is Visible    xpath=/html/body/main/div[1]/div[3]/div[2]/div/span[2]/div/ul/li/span[contains(text(),'${row}')]
+    Click Element    xpath=/html/body/main/div[1]/div[3]/div[2]/div/span[2]/div/ul/li/span[contains(text(),'${row}')]
+    Comment    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[2]/div/div[2]/span[1]/span
+    Comment    ${numberpage}    Get Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[2]/div/div[2]/span[1]/span
+    : FOR    ${i}    IN RANGE    1    ${row}+1
+    \    Input Odd_Oldversion

@@ -1,0 +1,33 @@
+*** Settings ***
+Library           ExtendedSelenium2Library
+Resource          ../Interface/Livegameassignment.txt
+
+*** Keywords ***
+Add Event
+    [Arguments]    ${matchno}    ${h}    ${m}    ${mm}    ${league}    ${home}
+    ...    ${away}    ${action}
+    Wait Until Element Is Visible    xpath=/html/body/div[2]/div/div[1]/div/div/div[2]/div/div[1]/div[1]/div/div[2]/div[2]/div[1]/div/div[2]/input    timeout=10s
+    Input Text    xpath=/html/body/div[2]/div/div[1]/div/div/div[2]/div/div[1]/div[1]/div/div[2]/div[2]/div[1]/div/div[2]/input    ${matchno}
+    Click Element    xpath=/html/body/div[2]/div/div[1]/div/div/div[2]/div/div[1]/div[1]/div/div[2]/div[3]/div[1]/div/div[2]/span/input
+    Set Kick Of Time For Event    ${h}    ${m}    ${mm}
+    Input Text    xpath=/html/body/div[2]/div/div[1]/div/div/div[2]/div/div[1]/div[1]/div/div[2]/div[4]/div[2]/input    ${league}
+    Input Text    xpath=/html/body/div[2]/div/div[1]/div/div/div[2]/div/div[1]/div[1]/div/div[2]/div[5]/div[2]/input    ${home}
+    Input Text    xpath=/html/body/div[2]/div/div[1]/div/div/div[2]/div/div[1]/div[1]/div/div[2]/div[6]/div[2]/input    ${away}
+    Click Element    xpath=/html/body/div[2]/div/div[1]/div/div/div[3]/button[contains(text(),'${action}')]
+    Wait Until Element Is Visible    xpath=/html/body/div[3]/div/div[3]/button[1]    timeout=20s
+    Click Element    xpath=/html/body/div[3]/div/div[3]/button[1]
+
+Set Kick Of Time For Event
+    [Arguments]    ${h}    ${m}    ${mm}
+    :FOR    ${i}    IN RANGE    1    13
+    \    ${a}    Get Text    xpath=/html/body/div[2]/div/div[1]/div/div/div[2]/div/div[1]/div[1]/div/div[2]/div[3]/div[1]/div/div[2]/div/div/div/div/div[2]/div[1]/ul/li[${i}]
+    \    Run keyword if    '${a}'=='${h}'    Run keywords    Click Element    xpath=/html/body/div[2]/div/div[1]/div/div/div[2]/div/div[1]/div[1]/div/div[2]/div[3]/div[1]/div/div[2]/div/div/div/div/div[2]/div[1]/ul/li[${i}]
+    \    ...    AND    Exit For Loop
+    :FOR    ${j}    IN RANGE    1    60
+    \    ${b}    Get text    xpath=/html/body/div[2]/div/div[1]/div/div/div[2]/div/div[1]/div[1]/div/div[2]/div[3]/div[1]/div/div[2]/div/div/div/div/div[2]/div[2]/ul/li[${j}]
+    \    Run keyword if    '${b}'=='${m}'    Run keywords    Click Element    xpath=/html/body/div[2]/div/div[1]/div/div/div[2]/div/div[1]/div[1]/div/div[2]/div[3]/div[1]/div/div[2]/div/div/div/div/div[2]/div[2]/ul/li[${j}]
+    \    ...    AND    Exit For Loop
+    :FOR    ${k}    IN RANGE    1    3
+    \    ${c}    Get Text    xpath=/html/body/div[2]/div/div[1]/div/div/div[2]/div/div[1]/div[1]/div/div[2]/div[3]/div[1]/div/div[2]/div/div/div/div/div[2]/div[3]/ul/li[${k}]
+    \    Run keyword if    '${c}'=='${mm}'    Run keywords    Click Element    xpath=/html/body/div[2]/div/div[1]/div/div/div[2]/div/div[1]/div[1]/div/div[2]/div[3]/div[1]/div/div[2]/div/div/div/div/div[2]/div[3]/ul/li[${k}]
+    \    ...    AND    Exit For Loop

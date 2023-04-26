@@ -1,0 +1,5 @@
+*** Variables ***
+${match_stt_dropdown}    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[3]/div[2]/div
+@{listofmatchstatus}    Select All    Cancel    Completed    In-play    Live    Postponed    Suspended
+${league_txt}     xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[2]/input
+${submit_btn}     xpath=//*[@id="root"]//button[contains(text(),'Submit')]

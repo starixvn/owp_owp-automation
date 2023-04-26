@@ -1,0 +1,281 @@
+*** Settings ***
+Suite Setup       init    sa
+Suite Teardown    Close All Browsers
+Test Setup
+Test Teardown
+Resource          ../Interface/Usermagement.txt
+Resource          ../Interface/login.txt
+Resource          ../Action/common.txt
+Resource          ../Action/common.txt
+Resource          ../Action/usermanagement_action.txt
+Library           ExtendedSelenium2Library
+Library           String
+Resource          ../Interface/common_interface.txt
+Library           DatabaseLibrary
+
+*** Test Cases ***
+Verify Filter Name and Filter's Items
+    [Documentation]    The purpose of this case is verification for:
+    ...    - Filter name: User, Role, Section, Department, Category, Location
+    ...    - Verify items of Role, Section, Department, Category, Location
+    ...
+    ...    Created by: Martin
+    [Tags]
+    Navigate To Menu    User Management
+    Sleep    1s
+    Verify Filter Label    User    Role    Section    Department    Category    Location
+    Verify By Default Filter    All    All    All    All    All
+    #----Verify Role's items
+    @{role_list}    Create List    All    Staff    Assistant Leader    Leader    Supervisor
+    ...    Section Head    Management    None
+    Run Keyword And Ignore Error    Verify Filter's Items    Role    ${role_list}
+    #----Verify Section's items
+    @{section_list}    Create List    All    Automation    B2C    Basketball    Credit CSD
+    ...    Cricket    Esports    EST    Fraud & Keyscore    Licensee CSD    Live Assistant-PH
+    ...    Live Assistant-VN    Live Trading-PH    Live Trading-VN    LST    Management    OPS Admin
+    ...    OSST    Other Sports    PH PH-Site    PH VN-Site    PM    PO
+    ...    Pre-Match    R&D CSD    Risk & Support    Supportive    Virtual Team    None
+    Run Keyword And Ignore Error    Verify Filter's Items    Section    ${section_list}
+    #----Verify Department's items
+    @{department_list}    Create List    All    AUTOMATION    B2C    BASKETBALL    CASINO & EXTERNAL
+    ...    CREDIT    CRICKET    ESPORTS    GO    LICENSEE    OTHER SPORTS
+    ...    OTHERS    POOL HOUSE    R&D    SOCCER    SUPPORT & VR    None
+    Run Keyword And Ignore Error    Verify Filter's Items    Department    ${department_list}
+    #----Verify Category's items
+    @{category_list}    Create List    All    Expat    Local    None
+    Run Keyword And Ignore Error    Verify Filter's Items    Category    ${category_list}
+    #----Verify Location's items
+    @{location_list}    Create List    All    CTI    SMS    WAH HCMC    WAH MAL
+    ...    WAH MNL    None
+    Run Keyword And Ignore Error    Verify Filter's Items    Location    ${location_list}
+
+Verify Search Invalid User Data
+    [Documentation]    The purpose of this case is verification for:
+    ...    - System returns data incorrectly with Search (Filter)
+    ...
+    ...
+    ...    Created by: Martin
+    [Tags]
+    Navigate To Menu    User Management
+    Sleep    1s
+    Verify Filter Label    User    Role    Section    Department    Category    Location
+    Verify By Default Filter    All    All    All    All    All
+    Select Filter And Search    starix15    Staff    EST    B2C    Local    SMS
+    ...    Yes
+    No Data    xpath=//*[@id="tblContent_js-listUsers"]/tbody/tr/td[2]/div[contains(text(),'')]    There is no data
+    Reload Page
+    [Teardown]
+
+Verify Search Valid User Data
+    [Documentation]    The purpose of this case is verification for:
+    ...    - Search User with filter condition
+    ...    - Returning data correctly with filter condition
+    ...
+    ...    Created by: Martin
+    [Tags]
+    Navigate To Menu    User Management
+    Sleep    1s
+    Comment    Verify Filter Label    User    Role    Section    Department    Category
+    ...    Location
+    Comment    Verify By Default Filter    All    All    All    All    All
+    Select Filter And Search    starix15    Staff    Live Assistant-PH    GO    Local    SMS
+    ...    Yes
+    Verify Single User    starix15    Staff    Live Assistant-PH    GO    Local    SMS
+    sleep    2s
+    Select Filter And Search    starix15    Staff    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}
+    ...    Yes
+    Verify Single User    starix15    Staff    Live Assistant-PH    GO    Local    SMS
+    Comment    Check Paging and Verify Data    Staff    LG    CSD    Local    SMS
+    [Teardown]
+
+Verify Result After Filtering Single Data
+    [Tags]
+    Navigate To Menu    User Management
+    Sleep    1s
+    # Search User with Role
+    Select Filter And Search    starix15    Staff    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}
+    ...    Yes
+    Verify Single User_xtest    starix15    Staff    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}
+    # Search User with Section
+    Reload Page
+    Select Filter And Search    starix15    ${EMPTY}    Live Assistant-PH    ${EMPTY}    ${EMPTY}    ${EMPTY}
+    ...    Yes
+    Verify Single User_xtest    starix15    ${EMPTY}    Live Assistant-PH    ${EMPTY}    ${EMPTY}    ${EMPTY}
+    # Search User with Department
+    Reload Page
+    Select Filter And Search    starix15    ${EMPTY}    ${EMPTY}    GO    ${EMPTY}    ${EMPTY}
+    ...    Yes
+    Verify Single User_xtest    starix15    ${EMPTY}    ${EMPTY}    GO    ${EMPTY}    ${EMPTY}
+    # Search User with Category
+    Reload Page
+    Select Filter And Search    starix15    ${EMPTY}    ${EMPTY}    ${EMPTY}    Local    ${EMPTY}
+    ...    Yes
+    Verify Single User_xtest    starix15    ${EMPTY}    ${EMPTY}    ${EMPTY}    Local    ${EMPTY}
+    # Search User with Location
+    Reload Page
+    Select Filter And Search    starix15    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}    SMS
+    ...    Yes
+    Verify Single User_xtest    starix15    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}    SMS
+
+Verify New User
+    [Documentation]    The purpose of this case is verification for:
+    ...    - New User has no info
+    ...
+    ...
+    ...    Created by: Martin
+    [Tags]
+    [Setup]    Clear User Info    mttesting
+    Navigate To Menu    User Management
+    Sleep    1s
+    Select Filter And Search    mttesting    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}
+    ...    Yes
+    @{expected_info}    Create List    1    Add    mttesting    Add    Add
+    ...    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}    Add    Add
+    ...    Add    Add    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}
+    ...    Add    No    ${EMPTY}
+    #Verify by default of new user
+    Verify New User Info    @{expected_info}
+    # Verify items of field selection
+    Click Element    ${search_btn}
+    Check Item List    Department    Section    Group    Role    Category    Location
+    ...    Level    Pickup    Second Account    Language
+
+Verify Add New User Info_Valid
+    [Tags]
+    Navigate To Menu    User Management
+    Sleep    1s
+    Select Filter And Search    mttesting    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}
+    ...    Yes
+    # Add New User Info
+    Add New User Info    mttesting    02453    Tran Thanh Thang    Martin    CSD    LA
+    ...    C_LG    Staff    111    0938855200    martin.tran@starixsoft.vn    martintranskype
+    ...    Local    SMS    A+    Yes    268 Dat Moi    Yes
+    ...    #10char    #10char    #35char    #20char    ${EMPTY}    #
+    ...    #9char    #22char    #45    #17    ${EMPTY}    #
+    ...    #500char
+    Select Language    CN    EN    VN
+    Reload Page
+    Select Filter And Search    mttesting    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}
+    ...    Yes
+    @{expected_info}    Create List    02453    Tran Thanh Thang    Martin    CSD    LA
+    ...    C_LG    Staff    111    0938855200    martin.tran@starixsoft.vn    martintranskype
+    ...    Local    SMS    A+    Yes    268 Dat Moi    Yes
+    Verify User Info After Updating    mttesting    @{expected_info}
+    Verify Selected Language    CN, EN, VN
+
+Verify Add New User Info_Invalid Nickname, Email
+    [Tags]
+    [Setup]
+    Navigate To Menu    User Management
+    Sleep    1s
+    Select Filter And Search    mttesting    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}
+    ...    Yes
+    # Add New User Info
+    Add New User Info    mttesting    02354    Tran Thanh Thang    Martin Space    CSD    LA
+    ...    C_LG    Staff    111    0938855200    MartinSpace    martintranskype
+    ...    Local    SMS    A+    Yes    268 Dat Moi    Yes
+    Reload Page    # Verify Result After Adding info to user    #10char    #35char    #20char    ${EMPTY}    #
+    ...    #9char    #22char    #45    #17    ${EMPTY}    #
+    ...    #500char
+    Select Filter And Search    mttesting    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}
+    ...    Yes
+    @{expected_info}    Create List    02354    Tran Thanh Thang    MartinSpace    CSD    LA
+    ...    C_LG    Staff    111    0938855200    MartinSpace@gmail.com    martintranskype
+    ...    Local    SMS    A+    Yes    268 Dat Moi    Yes
+    Verify User Info After Updating    mttesting    @{expected_info}
+
+Verify Add New User Info_Over Maxlength
+    [Tags]
+    [Setup]    Clear User Info    mttesting
+    Navigate To Menu    User Management
+    Sleep    1s
+    Select Filter And Search    mttesting    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}
+    ...    Yes
+    # Add New User Info
+    Add New User Info    mttesting    123456789100    Đại tướng Tô Lâm, Bộ trưởng Bộ Công,Đại tướng Tô Lâm, Bộ trưởng Bộ Công    Martintranthanhthangnexcel    CSD    LA
+    ...    S_LG(Special Team)    Staff    12345678910    09388552000938855200220938855200    martin.tran@starixsoft.vn    martintranskypenexcel
+    ...    Local    SMS    A+    Yes    Đại tướng Tô Lâm, Bộ trưởng Bộ Công an, trả lời chất vấn đầu tiên về nhóm vấn đề an ninh, trật tự, an toàn xã hội. Các nội dung chính là công tác đấu tranh, phòng chống tội phạm về sản xuất, tàng trữ, vận chuyển, mua bán trái phép chất ma túy; công tác đấu tranh, phòng chống tội phạm giết người, tội phạm liên quan tới hoạt động tín dụng đen, băng nhóm hoạt động theo kiểu Đại tướng Tô Lâm, Bộ trưởng Bộ Công an, trả lời chất vấn đầu tiên về nhóm vấn đề an ninh, trật tự, an toàn xã hội. Các nội dun, Đại tướng Tô Lâm, Bộ trưởng Bộ Công an, trả lời chất vấn đầu tiên về nhóm vấn đề an ninh, trật tự, an toàn xã hội. Các nội dung chính là công tác đấu tranh, phòng chống tội phạm về sản xuất, tàng trữ, vận chuyển, mua bán trái phép chất ma túy; công tác đấu tranh, phòng chống tội phạm giết người, tội phạm liên quan tới hoạt động tín dụng đen, băng nhóm hoạt động theo kiểu Đại tướng Tô Lâm, Bộ trưởng Bộ Công an, trả lời chất vấn đầu tiên về nhóm vấn đề an ninh, trật tự, an toàn xã hội. Các nội dun    Yes
+    ...    # Verify Result After Adding info to user    #10char    #35char    #20char    ${EMPTY}    #
+    ...    #9char    #22char    #45    #17    ${EMPTY}    #
+    ...    #500char
+    Reload Page
+    Select Filter And Search    mttesting    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}
+    ...    Yes
+    @{expected_info}    Create List    1234567891    Đại tướng Tô Lâm, Bộ trưởng Bộ Công    Martintranthanhthang    CSD    LA
+    ...    S_LG(Special Team)    Staff    123456789    0938855200093885520022    martin.tran@starixsoft.vn    martintranskypene
+    ...    Local    SMS    A+    Yes    Đại tướng Tô Lâm, Bộ trưởng Bộ Công an, trả lời chất vấn đầu tiên về nhóm vấn đề an ninh, trật tự, an toàn xã hội. Các nội dung chính là công tác đấu tranh, phòng chống tội phạm về sản xuất, tàng trữ, vận chuyển, mua bán trái phép chất ma túy; công tác đấu tranh, phòng chống tội phạm giết người, tội phạm liên quan tới hoạt động tín dụng đen, băng nhóm hoạt động theo kiểu Đại tướng Tô Lâm, Bộ trưởng Bộ Công an, trả lời chất vấn đầu tiên về nhóm vấn đề an ninh, trật tự, an toàn xã hội. Các nội dun    Yes
+    Verify User Info After Updating    mttesting    @{expected_info}
+
+Verify Edit User Info
+    [Documentation]    - Edit User Info
+    ...    - Verify User Info after Editted
+    ...    - Created by: Martin
+    [Tags]
+    Navigate To Menu    User Management
+    Sleep    1s
+    Select Filter And Search    mttesting    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}
+    ...    Yes
+    # Add New User Info
+    Edit User Info    mttesting    02354    Tran Thanh ThangMT    MartinEdit1    OPS Soccer    MTD
+    ...    SUPPORT TEAM    Leader    0938855224    0934455200    MartinSpace@gmail.com    martintranskype2
+    ...    Expat    CTI    B+    No    268 Dat Moi    No
+    # Verify Result After Adding info to user
+    Reload Page
+    Select Filter And Search    mttesting    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}
+    ...    Yes
+    @{expected_info}    Create List    02354    Tran Thanh ThangMT    MartinEdit1    OPS Soccer    MTD
+    ...    SUPPORT TEAM    Leader    0938855224    0934455200    MartinSpace@gmail.com    martintranskype2
+    ...    Expat    CTI    B+    No    268 Dat Moi    No
+    Verify User Info After Updating    mttesting    @{expected_info}
+
+Verify Result After Filtering Multiple Data
+    [Documentation]    \ - Verify Data Result after filtering with leaving blank user
+    ...    - Checking paging
+    ...    - Created by: Martin
+    [Tags]
+    Navigate To Menu    User Management
+    Sleep    1s
+    Select Filter And Search    ${EMPTY}    Staff    LA    ${EMPTY}    ${EMPTY}    ${EMPTY}
+    ...    Yes
+    Select Page Size    100
+    Check Returning Data    Staff    LA    ${EMPTY}    ${EMPTY}    ${EMPTY}
+    Check Paging and Verify Data    Staff    LA    ${EMPTY}    ${EMPTY}    ${EMPTY}
+    # End Suite    --- End Post
+    Log Out
+    [Teardown]
+
+Verify User Info_View Permission
+    [Setup]
+    Login    starix14    1234aa
+    # Set Variable
+    ${user}    Set Variable    mttesting
+    # Go to page to verify
+    Navigate To Menu    User Management
+    Sleep    1s
+    Select Filter And Search    ${user}    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}
+    ...    Yes
+    @{expected_info}    Create List    02354    ${user}    Tran Thanh ThangMT    MartinEdit    OPS Soccer
+    ...    MTD    SUPPORT TEAM    Leader    0938855224    0934455200    MartinSpace
+    ...    martintranskype2    Expat    CTI    B+    No    268 Dat Moi, Binh Tri Đông
+    ...    No
+    Verify User Info_View Permission    ${user}    @{expected_info}
+    Log Out
+
+test
+    [Documentation]    The purpose of this case is verification for:
+    ...    - Search User with filter condition
+    ...    - Returning data correctly with filter condition
+    ...
+    ...    Created by: Martin
+    [Tags]
+    Navigate To Menu    User Management
+    Sleep    1s
+    Select Filter And Search    mttesting    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}
+    ...    Yes
+    Scroll Element Into View    xpath=/html/body/main/div[1]/div[1]/div/div[4]/div/table/tbody/tr/td[20]/div/div/div/button
+    Select Language    CN    EN    VN
+    Select Filter And Search    mttesting    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}    ${EMPTY}
+    ...    Yes
+    Scroll Element Into View    xpath=/html/body/main/div[1]/div[1]/div/div[4]/div/table/tbody/tr/td[20]/div/div/div/button
+    Verify Selected Language    CN, EN, VN
+    [Teardown]

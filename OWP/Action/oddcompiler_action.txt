@@ -1,0 +1,499 @@
+*** Settings ***
+Library           Process
+Library           OperatingSystem
+Library           Screenshot
+Library           Collections
+Library           String
+Library           Dialogs
+Resource          ../Interface/login.txt
+Resource          ../Interface/login.txt
+Library           ExtendedSelenium2Library
+Resource          ../Interface/common_interface.txt
+Library           ExcelLibrary
+Resource          ../Interface/oddcompiler_ui.txt
+Library           BuiltIn
+Library           DateTime
+Resource          common.txt
+Resource          working_shift.txt
+
+*** Keywords ***
+Get Value From Event Upload
+    [Arguments]    ${row}
+    @{list}    Create List
+    : FOR    ${i}    IN RANGE    1    79
+    \    ${matchstatus}    Run keyword if    ${i}==1    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${matchstatus}'!='${NONE}'    Append to list    ${list}    ${matchstatus}
+    \    ${time}    Run keyword if    ${i}==4    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${time}'!='${NONE}'    Append to list    ${list}    ${time}
+    \    ${provider}    Run keyword if    ${i}==6    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${provider}'!='None'    Append to list    ${list}    ${provider}
+    \    ${otherprovider}    Run keyword if    ${i}==7    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${otherprovider}'!='None'    Append to list    ${list}    ${otherprovider}
+    \    ${home}    Run keyword if    ${i}==8    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${home}'!='None'    Append to list    ${list}    ${home}
+    \    ${away}    Run keyword if    ${i}==9    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${away}'!='None'    Append to list    ${list}    ${away}
+    \    ${league}    Run keyword if    ${i}==10    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${league}'!='None'    Append to list    ${list}    ${league}
+    \    ${mb_hdp}    Run keyword if    ${i}==11    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${mb_hdp}'!='None'    Append to list    ${list}    ${mb_hdp}
+    \    ${spread_hdp}    Run keyword if    ${i}==12    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${spread_hdp}'!='None'    Append to list    ${list}    ${spread_hdp}
+    \    ${spread_ou}    Run keyword if    ${i}==13    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${spread_ou}'!='None'    Append to list    ${list}    ${spread_ou}
+    \    ${rmark}    Run keyword if    ${i}==32    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${rmark}'!='None'    Append to list    ${list}    ${rmark}
+    \    ${wb}    Run keyword if    ${i}==33    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${wb}'!='None'    Append to list    ${list}    ${wb}
+    \    ${round}    Run keyword if    ${i}==34    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${round}'!='None'    Append to list    ${list}    ${round}
+    \    ${w1}    Run keyword if    ${i}==40    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${w1}'!='None'    Append to list    ${list}    ${w1}
+    \    ${w2}    Run keyword if    ${i}==41    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${w2}'!='None'    Append to list    ${list}    ${w2}
+    \    ${w3}    Run keyword if    ${i}==42    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${w3}'!='None'    Append to list    ${list}    ${w3}
+    \    ${w4}    Run keyword if    ${i}==43    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${w4}'!='None'    Append to list    ${list}    ${w4}
+    \    ${mbcn88hdp}    Run keyword if    ${i}==63    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${mbcn88hdp}'!='None'    Append to list    ${list}    ${mbcn88hdp}
+    \    ${spread88hdp}    Run keyword if    ${i}==64    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${spread88hdp}'!='None'    Append to list    ${list}    ${spread88hdp}
+    \    ${mbcn88ou}    Run keyword if    ${i}==67    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${mbcn88ou}'!='None'    Append to list    ${list}    ${mbcn88ou}
+    \    ${spread88ou}    Run keyword if    ${i}==68    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${spread88ou}'!='None'    Append to list    ${list}    ${spread88ou}
+    Log    ${list}
+    ${matchstatus}    Get From List    ${list}    0
+    ${time}    Get From List    ${list}    1
+    ${provider}    Get From List    ${list}    2
+    ${otherprovider}    Get From List    ${list}    3
+    ${home}    Get From List    ${list}    4
+    ${away}    Get From List    ${list}    5
+    ${league}    Get From List    ${list}    6
+    ${mb_hdp}    Get From List    ${list}    7
+    ${spread_hdp}    Get From List    ${list}    8
+    ${spread_ou}    Get From List    ${list}    9
+    ${rmark}    Get From List    ${list}    10
+    ${wb}    Get From List    ${list}    11
+    ${round}    Get From List    ${list}    12
+    ${w1}    Get From List    ${list}    13
+    ${w2}    Get From List    ${list}    14
+    ${w3}    Get From List    ${list}    15
+    ${w4}    Get From List    ${list}    16
+    ${mbcn88hdp}    Get From List    ${list}    17
+    ${spread88hdp}    Get From List    ${list}    18
+    ${mbcn88ou}    Get From List    ${list}    19
+    ${spread88ou}    Get From List    ${list}    20
+    [Return]    ${matchstatus}    ${time}    ${provider}    ${otherprovider}    ${home}    ${away}
+    ...    ${league}    ${mb_hdp}    ${spread_hdp}    ${spread_ou}    ${rmark}    ${wb}
+    ...    ${round}    ${w1}    ${w2}    ${w3}    ${w4}    ${mbcn88hdp}
+    ...    ${spread88hdp}    ${mbcn88ou}    ${spread88ou}
+
+Verify List of Match Status For Today and Future
+    [Arguments]    @{listofstatus}
+    [Documentation]    - By default match status for Today and Future must be In-play, Live
+    ...    - List of match status: Select All, Cancel, Completed, In-play, Live, Postponed, Suspended
+    ${match_status}    Get Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[3]/div[2]/div/div/div/span
+    Wait Until Element Is Visible    ${match_stt_dropdown}
+    Click Element    ${match_stt_dropdown}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[3]/div[2]/div/div
+    @{lst_status}    Create List
+    ${all}    Get Text    xpath=//span[contains(.,'Select All')]
+    Append To List    ${lst_status}    ${all}
+    : FOR    ${i}    IN RANGE    1    7
+    \    ${status}    Get Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[3]/div[2]//div[2]//ul/li[${i}]/label
+    \    Append To List    ${lst_status}    ${status}
+    #default checked
+    ${def_check1}    Get Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[3]/div[2]/div/div[2]//ul/li[3]/label[@aria-selected='true']
+    ${def_check2}    Get Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[3]/div[2]/div/div[2]//ul/li[4]/label[@aria-selected='true']
+    Should Be Equal    ${match_status}    ${def_check1},${SPACE}${def_check2}
+    Should Be Equal    ${listofstatus}    ${lst_status}
+    Click Element    ${match_stt_dropdown}
+
+Verify Default Date
+    ${date_web}    Get Value    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[1]/div[2]/div/input
+    ${date}    Get Current Date    result_format=%b %d, %Y
+    Should Be Equal    ${date_web}    ${date}
+
+Yesterday
+    ${date}    Get Current Date
+    ${date}    Subtract Time From Date    ${date}    1 days
+    ${date}    Convert Date    ${date}    result_format=%b %d, %Y
+    Log    ${date}
+    [Return]    ${date}
+
+Tomorrow
+    ${date}    Get Current Date
+    ${date}    Add Time To Date    ${date}    1 days
+    ${date}    Convert Date    ${date}    result_format=%b %d, %Y
+    Log    ${date}
+    [Return]    ${date}
+
+Verify List of Match Status For Yesterday
+    [Arguments]    @{listofstatus}
+    [Documentation]    - By default match status for Yesterday must be All items are selected
+    ...    - List of match status: Select All, Cancel, Completed, In-play, Live, Postponed, Suspended must be selected
+    #default checked
+    ${match_status}    Get Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[3]/div[2]/div/div/div/span
+    Should Be Equal    ${match_status}    All items are selected.
+    Wait Until Element Is Visible    ${match_stt_dropdown}
+    Click Element    ${match_stt_dropdown}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[3]/div[2]/div/div[2]//label[@aria-selected='true']
+    @{lst_status}    Create List
+    ${all}    Get Text    xpath=//span[contains(.,'Select All')]
+    Append To List    ${lst_status}    ${all}
+    : FOR    ${i}    IN RANGE    1    7
+    \    ${status}    Get Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[3]/div[2]//div[2]//ul/li[${i}]/label[@aria-selected='true']
+    \    Append To List    ${lst_status}    ${status}
+    #List of Match status must be checked
+    Should Be Equal    ${listofstatus}    ${lst_status}
+    Click Element    ${match_stt_dropdown}
+    Sleep    3s
+
+Select Yesterday
+    ${date}    Yesterday
+    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[1]/div[2]/div/input
+    Run keyword if    '${status}'=='True'    Run Keywords    Input Into Text Field    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[1]/div[2]/div/input    ${date}
+    ...    AND    sleep    2s
+
+Select Tomorrow
+    ${date}    Tomorrow
+    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[1]/div[2]/div/input
+    Run keyword if    '${status}'=='True'    Run Keywords    Input Into Text Field    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[1]/div[2]/div/input    ${date}
+    ...    AND    sleep    2s
+
+Clear Field Of Characters
+    [Arguments]    ${field}    ${character_count}
+    [Documentation]    This keyword pushes the delete key (ascii: \8) a specified number of times in a specified field.
+    : FOR    ${index}    IN RANGE    ${character_count}
+    \    Press Key    ${field}    \\8
+
+Input Into Text Field
+    [Arguments]    ${field}    ${text}
+    [Documentation]    Keyword is just an input text keyword. That clears the text field dynamically.
+    ${field text}=    Get Value    ${field}
+    ${field text length}=    Get Length    ${field text}
+    Clear Field of Characters    ${field}    ${field text length}
+    Press Key    ${field}    ${text}
+    Press Key    ${field}    \\13
+
+Select All Match Status
+    Click Element    ${match_stt_dropdown}
+    Wait Until Element Is Visible    xpath=//span[contains(.,'Select All')]
+    Click Element    xpath=//span[contains(.,'Select All')]
+
+Select Multiple Match Status
+    [Arguments]    ${status1}=${EMPTY}    ${status2}=${EMPTY}    ${status3}=${EMPTY}    ${status4}=${EMPTY}    ${status5}=${EMPTY}    ${status6}=${EMPTY}
+    : FOR    ${i}    IN RANGE    1    7
+    \    ${status}    Get Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[3]/div[2]/div/div[2]//ul/li[${i}]/label
+    \    Run keyword if    '${status1}'!='${EMPTY}' and '${status1}'=='${status}'    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[3]/div[2]/div/div[2]//ul/li[${i}]/label
+    \    Run keyword if    '${status2}'!='${EMPTY}' and '${status2}'=='${status}'    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[3]/div[2]/div/div[2]//ul/li[${i}]/label
+    \    Run keyword if    '${status3}'!='${EMPTY}' and '${status3}'=='${status}'    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[3]/div[2]/div/div[2]//ul/li[${i}]/label
+    \    Run keyword if    '${status4}'!='${EMPTY}' and '${status4}'=='${status}'    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[3]/div[2]/div/div[2]//ul/li[${i}]/label
+    \    Run keyword if    '${status5}'!='${EMPTY}' and '${status5}'=='${status}'    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[3]/div[2]/div/div[2]//ul/li[${i}]/label
+    \    Run keyword if    '${status6}'!='${EMPTY}' and '${status6}'=='${status}'    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/div[3]/div[2]/div/div[2]//ul/li[${i}]/label
+    Click Element    ${match_stt_dropdown}
+    Sleep    2s
+
+Search League To View Odd Compiler
+    [Arguments]    ${league}    ${matchstatus}
+    Run keyword if    '${league}'!='${EMPTY}'    Input Text    ${league_txt}    ${league}
+    sleep    2s
+    Click Element    ${submit_btn}
+    Wait Until Page Contains Element    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[1]/div/span[@title='${matchstatus}']    timeout=60s
+    Comment    Run Keyword And Ignore Error    Wait Until Page Does Not Contain Element    xpath=//*[@id="root"]/div/div[3]/main/div/div[1]/svg    timeout=20s
+
+Get Event Info
+    ${status}    Get Element Attribute    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[1]/div/span[2]@title
+    ${kotime}    Get text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[2]/div/span
+    ${league}    Get Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[3]/p[1]
+    ${match}    Get Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[3]/p[2]
+    ${rmark}    Get Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[4]/div/p[1]
+    ${round}    Get Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[4]/div/p[2]
+    ${provider}    Get Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[5]/div/p[1]
+    Click Element    xpath=//*[@id="OP0"]
+    ${otherprovider}    Get Text    xpath=/html/body/div[2]/div/div/div/div
+    ${wb}    Get Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[5]/div/p[2]
+    ${wb_bg}    Get CSS Property Value    css=div.rt-tr-group:nth-child(1) > div:nth-child(1) > div:nth-child(5) > div:nth-child(1) > p:nth-child(3)    color
+    Should Be Equal    ${wb_bg}    rgba(254, 96, 0, 1)
+    ${w1}    Get Element Attribute    xpath=/html/body/div[1]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[6]/div/a[1]@href
+    ${w1}    Fetch From Right    ${w1}    V1/
+    ${w2}    Get Element Attribute    xpath=/html/body/div[1]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[6]/div/a[2]@href
+    ${w2}    Fetch From Right    ${w2}    V1/
+    ${w3}    Get Element Attribute    xpath=/html/body/div[1]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[6]/div/a[3]@href
+    ${w3}    Fetch From Right    ${w3}    V1/
+    ${w4}    Get Element Attribute    xpath=/html/body/div[1]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[6]/div/a[4]@href
+    ${w4}    Fetch From Right    ${w4}    V1/
+    ${mb_mbc}    Get Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[7]/div/div[1]/div
+    Comment    ${mb_cn88}    Get Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[7]/div/div[2]/div
+    [Return]    ${status}    ${kotime}    ${league}    ${match}    ${rmark}    ${round}
+    ...    ${provider}    ${otherprovider}    ${wb}    ${w1}    ${w2}    ${w3}
+    ...    ${w4}    ${mb_mbc}
+
+Verify Event Info
+    [Arguments]    ${matchstatus}    ${time}    ${provider}    ${otherprovider}    ${home}    ${away}
+    ...    ${league}    ${mb_hdp}    ${spread_hdp}    ${spread_ou}    ${rmark}    ${wb}
+    ...    ${round}    ${w1}    ${w2}    ${w3}    ${w4}
+    ${status}    ${kotime}    ${league1}    ${match}    ${rmark1}    ${round1}    ${provider1}
+    ...    ${otherprovider1}    ${wb1}    ${web1}    ${web2}    ${web3}    ${web4}
+    ...    ${mb_mbc}    Get Event Info
+    Should Be Equal    ${matchstatus}    ${status}
+    Should Be Equal    ${time}    ${kotime}
+    Should Be Equal    ${provider}    ${provider1}
+    Should Be Equal    ${otherprovider}    ${otherprovider1}
+    Should Be Equal    ${home} -vs- ${away}    ${match}
+    Should Be Equal    ${league}    ${league1}
+    Should Be Equal    ${mb_hdp}(${spread_hdp}%- ${spread_ou}%)    ${mb_mbc}
+    Should Be Equal    ${rmark}    ${rmark1}
+    Should Be Equal    ${wb}    ${wb1}
+    Should Be Equal    Round:${round}    ${round1}
+    Should Be Equal    ${w1}    ${web1}
+    Should Be Equal    ${w2}    ${web2}
+    Should Be Equal    ${w3}    ${web3}
+    Should Be Equal    ${w4}    ${web4}
+    Comment    Should Be Equal    ${mbcn88hdp} (${spread88hdp}%-${spread88ou}%)    ${mb_cn88}
+
+Input Market And Odd
+    [Arguments]    ${market}    ${team}    ${odd_team}    ${home_odd}    ${away_odd}    ${ou_odd}
+    ...    ${over_odd}    ${under_odd}    ${1_odd}    ${x_odd}    ${2_odd}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[8]/div/div
+    Clear Element Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[8]/div/div
+    sleep    2s
+    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[8]/div/div    ${market}
+    Select HDP Team    ${team}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[1]/div/input
+    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[1]/div/input    ${odd_team}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[2]/div/input
+    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[2]/div/input    ${home_odd}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[3]/div/input
+    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[3]/div/input    ${away_odd}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[4]/div/input
+    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[4]/div/input    ${ou_odd}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[5]/div/input
+    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[5]/div/input    ${over_odd}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[6]/div/input
+    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[6]/div/input    ${under_odd}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[7]/div/input
+    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[7]/div/input    ${1_odd}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[8]/div/input
+    Input Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[8]/div/input    ${x_odd}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[9]/div/input
+    Press Key    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[9]/div/input    ${2_odd}
+
+Select HDP Team
+    [Arguments]    ${team}
+    ${home_txt}    Get Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[1]/div[1]/div/div/div[1]/div
+    Should Be Equal    ${home_txt}    Home
+    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[1]/div[1]/div/div/div[1]/div
+    Comment    : FOR    ${index}    IN RANGE    0    2
+    Comment    \    Wait Until Element Is Visible    id=react-select-2-option-${index}
+    Comment    \    ${text}    Get Text    id=react-select-2-option-${index}
+    Comment    \    Run keyword if    '${text}'=='${team}'    Run keywords    Click Element    id=react-select-2-option-${index}
+    ...    AND    Exit For Loop
+    Wait Until Element Is Visible    xpath=//div[@id='root']/div/div[3]/main/div/div[2]/div/div/div[3]/div/div/div[9]/div/div/div/div/div[2]/div/div    timeout=10s
+    ${text}    Get Text    xpath=//div[@id='root']/div/div[3]/main/div/div[2]/div/div/div[3]/div/div/div[9]/div/div/div/div/div[2]/div/div
+    Run keyword if    '${text}'=='${team}'    Click Element    xpath=//div[@id='root']/div/div[3]/main/div/div[2]/div/div/div[3]/div/div/div[9]/div/div/div/div/div[2]/div/div
+    ${text}    Get Text    xpath=//div[@id='root']/div/div[3]/main/div/div[2]/div/div/div[3]/div/div/div[9]/div/div/div/div/div[2]/div/div[2]
+    Run keyword if    '${text}'=='${team}'    Click Element    xpath=//div[@id='root']/div/div[3]/main/div/div[2]/div/div/div[3]/div/div/div[9]/div/div/div/div/div[2]/div/div[2]
+
+Verify Market And Positive Odds
+    [Arguments]    ${market}    ${team}    ${odd_team}    ${home_odd}    ${away_odd}    ${ou_odd}
+    ...    ${over_odd}    ${under_odd}    ${1_odd}    ${x_odd}    ${2_odd}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[8]/div/div
+    ${mk}    Get Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[8]/div/div
+    Should Be Equal    ${mk}    ${market}
+    ${home_txt}    Get Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[1]/div[1]/div/div/div[1]/div
+    Should Be Equal    ${home_txt}    ${team}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[1]/div/input
+    ${o_team}    Get Value    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[1]/div/input
+    Should Be Equal    ${o_team}    ${odd_team}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[2]/div/input
+    ${o_home}    Get Value    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[2]/div/input
+    Should Be Equal    ${o_home}    ${home_odd}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[3]/div/input
+    ${o_away}    Get Value    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[3]/div/input
+    Should Be Equal    ${o_away}    ${away_odd}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[4]/div/input
+    ${o_ou}    Get Value    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[4]/div/input
+    Should Be Equal    ${o_ou}    ${ou_odd}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[5]/div/input
+    ${o_odd}    Get Value    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[5]/div/input
+    Should Be Equal    ${o_odd}    ${over_odd}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[6]/div/input
+    ${u_odd}    Get Value    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[6]/div/input
+    Should Be Equal    ${u_odd}    ${under_odd}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[7]/div/input
+    ${odd_1}    Get Value    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[7]/div/input
+    Should Be Equal    ${odd_1}    ${1_odd}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[8]/div/input
+    ${odd_x}    Get Value    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[8]/div/input
+    Should Be Equal    ${odd_x}    ${x_odd}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[9]/div/input
+    ${odd_2}    Get Value    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[9]/div/input
+    Should Be Equal    ${odd_2}    ${2_odd}
+
+Today
+    ${date}    Get Current Date    result_format=%b %d, %Y
+    Log    ${date}
+    [Return]    ${date}
+
+Clear Odd
+    Clear Element Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[8]/div/div
+    Click Element    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[10]/button
+    Gen_Confirmation    Are you sure to delete odds values of Match?    OK
+
+Verify Market And Negative Odds
+    [Arguments]    ${market}    ${team}    ${odd_team}    ${home_odd}    ${away_odd}    ${ou_odd}
+    ...    ${over_odd}    ${under_odd}    ${1_odd}    ${x_odd}    ${2_odd}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[8]/div/div
+    ${mk}    Get Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[8]/div/div
+    Should Be Equal    ${mk}    ${market}
+    ${home_txt}    Get Text    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[1]/div[1]/div/div/div[1]/div
+    Should Be Equal    ${home_txt}    ${team}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[1]/div/input
+    ${o_team}    Get Value    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[1]/div/input
+    Should Be Equal    ${o_team}    ${odd_team}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[2]/div/input
+    ${o_home}    Get Value    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[2]/div/input
+    Should Be Equal    ${o_home}    ${home_odd}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[3]/div/input
+    ${o_away}    Get Value    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[3]/div/input
+    Should Be Equal    ${o_away}    ${away_odd}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[4]/div/input
+    ${o_ou}    Get Value    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[4]/div/input
+    Should Be Equal    ${o_ou}    ${ou_odd}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[5]/div/input
+    ${o_odd}    Get Value    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[5]/div/input
+    Should Be Equal    ${o_odd}    ${over_odd}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[6]/div/input
+    ${u_odd}    Get Value    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[6]/div/input
+    Should Be Equal    ${u_odd}    ${under_odd}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[7]/div/input
+    ${odd_1}    Get Value    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[7]/div/input
+    Should Be Equal    ${odd_1}    ${1_odd}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[8]/div/input
+    ${odd_x}    Get Value    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[8]/div/input
+    Should Be Equal    ${odd_x}    ${x_odd}
+    Wait Until Element Is Visible    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[9]/div/input
+    ${odd_2}    Get Value    xpath=//*[@id="root"]/div/div[3]/main/div/div[2]/div/div[1]/div[3]/div[1]/div/div[9]/div/div[9]/div/input
+    Should Be Equal    ${odd_2}    ${2_odd}
+    ${odd_bg}    Get CSS Property Value    css=div.rt-tr-group:nth-child(1) > div:nth-child(1) > div:nth-child(9) > div:nth-child(1) > div:nth-child(1) > div:nth-child(3) > input:nth-child(1)    color
+    Should Be Equal    ${odd_bg}    rgba(242, 24, 23, 1)
+    : FOR    ${i}    IN RANGE    2    10
+    \    ${color}    Get CSS Property Value    css=div.rt-tr-group:nth-child(1) > div:nth-child(1) > div:nth-child(9) > div:nth-child(1) > div:nth-child(${i}) > div:nth-child(1) > input:nth-child(1)    color
+    \    Should Be Equal    ${color}    rgba(242, 24, 23, 1)
+
+Get Value From Event Upload_New
+    [Arguments]    ${row}
+    @{list}    Create List
+    : FOR    ${i}    IN RANGE    1    66
+    \    ${matchstatus}    Run keyword if    ${i}==2    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${matchstatus}'!='${NONE}'    Append to list    ${list}    ${matchstatus}
+    \    ${time}    Run keyword if    ${i}==3    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${time}'!='${NONE}'    Append to list    ${list}    ${time}
+    \    ${provider}    Run keyword if    ${i}==30    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${provider}'!='None'    Append to list    ${list}    ${provider}
+    \    ${otherprovider}    Run keyword if    ${i}==31    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${otherprovider}'!='None'    Append to list    ${list}    ${otherprovider}
+    \    ${home}    Run keyword if    ${i}==5    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${home}'!='None'    Append to list    ${list}    ${home}
+    \    ${away}    Run keyword if    ${i}==6    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${away}'!='None'    Append to list    ${list}    ${away}
+    \    ${league}    Run keyword if    ${i}==7    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${league}'!='None'    Append to list    ${list}    ${league}
+    \    ${mb_hdp}    Run keyword if    ${i}==10    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${mb_hdp}'!='None'    Append to list    ${list}    ${mb_hdp}
+    \    ${spread_hdp}    Run keyword if    ${i}==11    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${spread_hdp}'!='None'    Append to list    ${list}    ${spread_hdp}
+    \    ${spread_ou}    Run keyword if    ${i}==12    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${spread_ou}'!='None'    Append to list    ${list}    ${spread_ou}
+    \    ${rmark}    Run keyword if    ${i}==33    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${rmark}'!='None'    Append to list    ${list}    ${rmark}
+    \    ${wb}    Run keyword if    ${i}==34    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${wb}'!='None'    Append to list    ${list}    ${wb}
+    \    ${round}    Run keyword if    ${i}==35    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${round}'!='None'    Append to list    ${list}    ${round}
+    \    ${w1}    Run keyword if    ${i}==43    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${w1}'!='None'    Append to list    ${list}    ${w1}
+    \    ${w2}    Run keyword if    ${i}==44    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${w2}'!='None'    Append to list    ${list}    ${w2}
+    \    ${w3}    Run keyword if    ${i}==45    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${w3}'!='None'    Append to list    ${list}    ${w3}
+    \    ${w4}    Run keyword if    ${i}==46    Read Excel Cell    ${row}    ${i}
+    \    ...    Sheet0
+    \    Run keyword if    '${w4}'!='None'    Append to list    ${list}    ${w4}
+    \    Comment    ${mbcn88hdp}    Run keyword if    ${i}==66    Read Excel Cell    ${row}
+    \    ...    ${i}    Sheet0
+    \    Comment    Run keyword if    '${mbcn88hdp}'!='None'    Append to list    ${list}    ${mbcn88hdp}
+    \    Comment    ${spread88hdp}    Run keyword if    ${i}==67    Read Excel Cell    ${row}
+    \    ...    ${i}    Sheet0
+    \    Comment    Run keyword if    '${spread88hdp}'!='None'    Append to list    ${list}    ${spread88hdp}
+    \    Comment    ${mbcn88ou}    Run keyword if    ${i}==70    Read Excel Cell    ${row}
+    \    ...    ${i}    Sheet0
+    \    Comment    Run keyword if    '${mbcn88ou}'!='None'    Append to list    ${list}    ${mbcn88ou}
+    \    Comment    ${spread88ou}    Run keyword if    ${i}==71    Read Excel Cell    ${row}
+    \    ...    ${i}    Sheet0
+    \    Comment    Run keyword if    '${spread88ou}'!='None'    Append to list    ${list}    ${spread88ou}
+    Log    ${list}
+    ${matchstatus}    Get From List    ${list}    0
+    ${time}    Get From List    ${list}    1
+    ${home}    Get From List    ${list}    2
+    ${away}    Get From List    ${list}    3
+    ${league}    Get From List    ${list}    4
+    ${mb_hdp}    Get From List    ${list}    5
+    ${spread_hdp}    Get From List    ${list}    6
+    ${spread_ou}    Get From List    ${list}    7
+    ${provider}    Get From List    ${list}    8
+    ${otherprovider}    Get From List    ${list}    9
+    ${rmark}    Get From List    ${list}    10
+    ${wb}    Get From List    ${list}    11
+    ${round}    Get From List    ${list}    12
+    ${w1}    Get From List    ${list}    13
+    ${w2}    Get From List    ${list}    14
+    ${w3}    Get From List    ${list}    15
+    ${w4}    Get From List    ${list}    16
+    Comment    ${mbcn88hdp}    Get From List    ${list}    17
+    Comment    ${spread88hdp}    Get From List    ${list}    18
+    Comment    ${mbcn88ou}    Get From List    ${list}    19
+    Comment    ${spread88ou}    Get From List    ${list}    20
+    [Return]    ${matchstatus}    ${time}    ${provider}    ${otherprovider}    ${home}    ${away}
+    ...    ${league}    ${mb_hdp}    ${spread_hdp}    ${spread_ou}    ${rmark}    ${wb}
+    ...    ${round}    ${w1}    ${w2}    ${w3}    ${w4}

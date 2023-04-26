@@ -1,0 +1,42 @@
+*** Variables ***
+${txt_date}       xpath = //div[@class = 'filter-control calendar']//input
+${btn_submit}     xpath = //button[@class = 'button-submit']
+${all_match_status}    xpath = //div[text()='Match Status']/following-sibling::div//span[text()='All items are selected']
+${today_match_status}    xpath = //div[text()='Match Status']/following-sibling::div//span[text()='In-play, Live']
+${txt_employee}    xpath = //div[@class='label' and text()='Employee']//following-sibling::div/input
+${ddl_match_status}    xpath = //div[text()='Match Status']//following-sibling::div/div[@class='dropdown']//span[@class='dropdown-heading-dropdown-arrow']
+${btn_daily}      xpath = //button[@class='button-working-shift']
+${ddl_showhidecolumn}    xpath = //div[@class = 'filter-control btn-block btn-block--right']/div[@class='multi-select']
+${btn_add_event}    xpath = //button[text()='Add Event']
+${txt_match_no}    xpath = //div[contains(@class, 'modal-content')]//input[@name='MatchNo']
+${txt_status}     xpath = //div[contains(@class, 'modal-content')]//div[text() = 'Match Status']//following-sibling::div//div[contains(@class, 'select__input')]/input
+${txt_infositeId}    xpath = //div[contains(@class, 'modal-content')]//div[text() = 'InfoSiteID']//following-sibling::div/input
+${txt_KO}         xpath = //div[contains(@class, 'modal-content')]//div[text() = 'KO Time']/following-sibling::div//input
+${txt_otherKO}    xpath = //div[contains(@class, 'modal-content')]//div[text() = 'Other Time']/following-sibling::div//input
+${txt_league}     xpath = //div[contains(@class, 'modal-content')]//div[text() = 'League']/following-sibling::div/input
+${txt_home}       xpath = //div[contains(@class, 'modal-content')]//div[text() = 'Home Team']/following-sibling::div/input
+${txt_away}       xpath = //div[contains(@class, 'modal-content')]//div[text() = 'Away Team']/following-sibling::div/input
+${txt_remark}     xpath = //div[contains(@class, 'modal-content')]//div[text() = 'Remark']/following-sibling::div/input
+${txt_round}      xpath = //div[contains(@class, 'modal-content')]//div[text() = 'Round']/following-sibling::div/input
+${txt_division}    xpath = //div[contains(@class, 'modal-content')]//div[text() = 'Division']/following-sibling::div/input
+${txt_web1}       xpath = //div[contains(@class, 'modal-content')]//div[text() = 'Web1']/following-sibling::div/input
+${txt_web2}       xpath = //div[contains(@class, 'modal-content')]//div[text() = 'Web2']/following-sibling::div/input
+${txt_web3}       xpath = //div[contains(@class, 'modal-content')]//div[text() = 'Web3']/following-sibling::div/input
+${txt_web4}       xpath = //div[contains(@class, 'modal-content')]//div[text() = 'Web4']/following-sibling::div/input
+${txt_tv}         xpath = //div[contains(@class, 'modal-content')]//div[text() = 'TV']/following-sibling::div//input
+${txt_channel}    xpath = //div[contains(@class, 'modal-content')]//div[text() = 'IPTV/Channel']/following-sibling::div/input
+${txt_wb}         xpath = //div[contains(@class, 'modal-content')]//div[text() = 'WB']/following-sibling::div/input
+${txt_provider}    xpath = //div[contains(@class, 'modal-content')]//div[text() = 'Provider']/following-sibling::div/input
+${txt_other_provider}    xpath = //div[contains(@class, 'modal-content')]//div[text() = 'Other Provider']/following-sibling::div/input
+${txt_agent}      xpath = //div[contains(@class, 'modal-content')]//div[text() = 'Agent']/following-sibling::div//input
+${txt_phone}      xpath = //div[contains(@class, 'modal-content')]//div[text() = 'Phone']/following-sibling::div/input
+${txt_match_offer}    xpath = //div[contains(@class, 'modal-content')]//div[text() = 'Match Offer']/following-sibling::div//div[contains(@class, 'select__input')]/input
+${txt_no_hdp}     xpath = //div[contains(@class, 'modal-content')]//div[text() = 'No. HDP']/following-sibling::div//div[contains(@class, 'select__input')]/input
+${btn_add_odds}    xpath = //div[contains(@class, 'card-item recommend-odds')]//button[contains(@class, 'btn-add')]
+${btn_add_maxbet}    xpath = //div[contains(@class, 'table tbl-maxbet')]/button
+${btn_add}        xpath = //div[contains(@class, 'modal-footer')]/button[text()='Add ']
+${btn_add_and_continue}    xpath = //div[contains(@class, 'modal-footer')]/button[text()='Add & Continue ']
+${btn_cancel}     xpath = //div[contains(@class, 'modal-footer')]/button[text()='Cancel ']
+${txt_special_event}    xpath = //div[text()='Special Event']/following-sibling::div//input[contains(@id,'react-select')]
+${btn_note}       xpath = //span[@class = 'icon-comment']
+${txt_note}       xpath = //div[contains(@class , 'note-popover')]//input

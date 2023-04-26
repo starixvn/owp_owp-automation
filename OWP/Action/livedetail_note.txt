@@ -1,0 +1,92 @@
+*** Settings ***
+Resource          ../Interface/Usermagement.txt
+Library           Collections
+Library           ExtendedSelenium2Library
+Resource          ../Interface/common_interface.txt
+Resource          ../Interface/livedetail_note.txt
+
+*** Keywords ***
+Add New Note
+    [Arguments]    ${content}
+    ${status_nonote}    Run Keyword And Return Status    Wait Until Element Is Visible    ${note_empty_txt}    timeout=20s
+    ${text_notnote}    Run Keyword If    '${status_nonote}'=='True'    Get Text    ${note_empty_txt}
+    Run Keyword If    '${status_nonote}'!='True' or '${status_nonote}'=='True'    Run keywords    Wait Until Element Is Visible    ${input_note}    timeout=20s
+    ...    AND    Input Text    ${input_note}    ${content}
+    ...    AND    Press Key    ${input_note}    \\13
+    sleep    3s
+
+Verify Added or Edited Note
+    [Arguments]    ${expected_content}
+    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="root"]//li/div[@class='content']
+    Run keyword if    '${status}'== 'True'    Verirify Note    ${expected_content}
+    ...    ELSE    Log    ${expected_content} is deleted successfully
+    Sleep    2s
+
+Edit Note
+    [Arguments]    ${orginal_note}    ${new_note}    ${action}
+    ${content_note}    Set Variable    @${user_login}${SPACE}${orginal_note}
+    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="root"]//li/div[@class='content']    timeout=20s
+    ${count}    Run Keyword If    '${status}'== 'True'    Get Matching Xpath Count    xpath=//*[@id="root"]//li/div[@class='content']
+    : FOR    ${i}    IN RANGE    1    ${count} + 1
+    \    ${get_content}    get text    xpath=//*[@id="root"]//li[${i}]/div[@class='content']
+    \    Run Keyword If    '${get_content}'=='${content_note}' and '${action}'=='Save'    Run Keywords    Edit Note_Expected Location    ${i}    ${new_note}
+    \    ...    ${action}
+    \    ...    AND    Exit For Loop
+    \    Run Keyword If    '${get_content}'=='${content_note}' and '${action}'=='Cancel'    Run Keywords    Edit Note_Expected Location    ${i}    ${new_note}
+    \    ...    ${action}
+    \    ...    AND    Exit For Loop
+    Sleep    3s
+
+Edit Note_Expected Location
+    [Arguments]    ${i}    ${new_note}    ${action}
+    Run Keyword If    '${action}'=='Save'    Run keywords    Click Element    xpath=//*[@id="root"]//li[${i}]//button[@class='icon-edit']
+    ...    AND    Wait Until Element Is Visible    xpath=//*[@id="root"]//li[${i}]//textarea    timeout=10s
+    ...    AND    Input Text    xpath=//*[@id="root"]//li[${i}]//textarea    ${new_note}
+    ...    AND    Click Element    xpath=//*[@id="root"]//li[${i}]//button[@class='icon-save']
+    Run Keyword If    '${action}'=='Cancel'    Run keywords    Click Element    xpath=//*[@id="root"]//li[${i}]//button[@class='icon-edit']
+    ...    AND    Wait Until Element Is Visible    xpath=//*[@id="root"]//li[${i}]//textarea    timeout=10s
+    ...    AND    Input Text    xpath=//*[@id="root"]//li[${i}]//textarea    ${new_note}
+    ...    AND    Click Element    xpath=//*[@id="root"]//li[${i}]//button[@class='icon-cancel']
+
+Delete Note
+    [Arguments]    ${orginal_note}    ${action}
+    ${content_note}    Set Variable    @${user_login}${SPACE}${orginal_note}
+    ${status}    Run Keyword And Return Status    Wait Until Element Is Visible    xpath=//*[@id="root"]//li/div[@class='content']    timeout=60s
+    ${count}    Run Keyword If    '${status}'== 'True'    Get Matching Xpath Count    xpath=//*[@id="root"]//li/div[@class='content']
+    : FOR    ${i}    IN RANGE    1    ${count} + 1
+    \    ${get_content}    get text    xpath=//*[@id="root"]//li[${i}]/div[@class='content']
+    \    Run Keyword If    '${get_content}' == '${content_note}' and '${action}' == 'Ok'    Run Keywords    Click Element    xpath=//*[@id="root"]//li[${i}]//button[@class='icon-delete']
+    \    ...    AND    Get Alert and confirm    Are you sure you want to permanently delete this note?    ${action}
+    \    ...    AND    Exit For Loop
+    \    Run Keyword If    '${get_content}' == '${content_note}' and '${action}' == 'Cancel'    Run Keywords    Click Element    xpath=//*[@id="root"]//li[${i}]//button[@class='icon-delete']
+    \    ...    AND    Get Alert and confirm    Are you sure you want to permanently delete this note?    ${action}
+    \    ...    AND    Exit For Loop
+    Sleep    3s
+
+Get Alert and confirm
+    [Arguments]    ${expected_alert}    ${action}
+    Wait Until Element Is Visible    xpath=/html/body/div[2]/div/div[2]/div/strong    timeout=10s
+    ${content}    Get Text    xpath=/html/body/div[2]/div/div[2]/div/strong
+    Should Be Equal    ${expected_alert}    ${content}
+    Run Keyword If    '${action}'=='Ok'    Click Element    xpath=//button[contains(text(),'OK')]
+    Run Keyword If    '${action}'=='Cancel'    Click Element    xpath=//button[contains(text(),'Cancel')]
+
+Verirify Note
+    [Arguments]    ${expected_content}
+    ${count}    Get Matching Xpath Count    xpath=//*[@id="root"]//li/div[@class='content']
+    : FOR    ${i}    IN RANGE    1    ${count} + 1
+    \    ${get_content}    Get Text    xpath=//*[@id="root"]//li[${i}]/div[@class='content']
+    \    Log    ${get_content}
+    \    Run Keyword If    '${get_content}'=='@${user_login}${SPACE}${expected_content}'    Run keywords    Should Be Equal    ${get_content}    @${user_login}${SPACE}${expected_content}
+    \    ...    AND    Log    ${expected_content} is added or editted successfully
+    \    ...    AND    Exit For Loop
+    \    Run Keyword If    '${get_content}'!='@${user_login}${SPACE}${expected_content}'    Log    ${expected_content} has been deleted
+    Sleep    2s
+
+Get Alert and confirm odds
+    [Arguments]    ${expected_alert}    ${action}
+    Wait Until Element Is Visible    xpath=//*[@id="swal2-content"]    timeout=10s
+    ${content}    Get Text    xpath=//*[@id="swal2-content"]
+    Should Be Equal    ${expected_alert}    ${content}
+    Run Keyword If    '${action}'=='Ok'    Click Element    xpath=//button[contains(text(),'OK')]
+    Run Keyword If    '${action}'=='Cancel'    Click Element    xpath=//button[contains(text(),'Cancel')]

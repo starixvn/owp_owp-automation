@@ -1,0 +1,4 @@
+*** Variables ***
+${user_login}     sa
+${userlogin_location}    xpath=/html/body/header/nav/div[2]/div[1]/div/span[contains(text(),'${user_login}')]
+${logout_link}    xpath=//*[@id="profile"]/li[2]/a

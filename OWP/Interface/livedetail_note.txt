@@ -1,0 +1,5 @@
+*** Variables ***
+${input_note}     xpath=//*[@id="root"]/div/div[3]/main/div/div[3]/div[1]//form/input    # Locator for adding new note
+${addodd_btn}     xpath=//*[@id="root"]//div/button/span[contains(text(),'Add')]    # Add button for recommend odds
+${note_empty_txt}    xpath=//*[@id="root"]//div[2][contains(text(),'There is no data')]    # There is no data
+${odd_empty_txt}    xpath=//*[@id="root"]//div[2]/table/tbody/tr/td[contains(text(),'There is no data')]    # There is no data
